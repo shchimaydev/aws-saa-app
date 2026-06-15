@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Personal use — open read/write.
+    // If you ever share the URL publicly, tighten this.
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
