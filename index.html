@@ -387,12 +387,120 @@ header span { font-size: 12px; color: var(--text2); }
   .sidebar { display: none; }
   .main { padding: 16px; }
 }
+
+/* AUTH OVERLAY */
+#auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 20, 0.92);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#auth-overlay.hidden { display: none !important; }
+#auth-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 48px 40px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+#auth-modal .auth-logo {
+  width: 56px; height: 56px;
+  background: var(--accent);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 16px; color: #000;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+#auth-modal h2 { font-size: 22px; font-weight: 700; }
+#auth-modal p { font-size: 14px; color: var(--text2); line-height: 1.5; max-width: 280px; }
+#google-signin-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  color: #1f1f1f;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: box-shadow 0.2s;
+}
+#google-signin-btn:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+#google-signin-btn svg { flex-shrink: 0; }
+#auth-error {
+  font-size: 13px;
+  color: var(--red);
+  min-height: 18px;
+}
+
+/* USER BADGE in header */
+#user-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px 4px 4px;
+  font-size: 13px;
+  cursor: default;
+}
+#user-badge img {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+#user-badge .user-name { color: var(--text2); max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#signout-btn {
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0 0 0 4px;
+  text-decoration: underline;
+}
+#signout-btn:hover { color: var(--text); }
 </style>
 <!-- Firebase SDK (compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 </head>
 <body>
+
+<!-- AUTH OVERLAY -->
+<div id="auth-overlay">
+  <div id="auth-modal">
+    <div class="auth-logo">AWS</div>
+    <h2>SAA-C03 Quiz</h2>
+    <p>Sign in to save and sync your progress across all your devices.</p>
+    <button id="google-signin-btn">
+      <svg width="20" height="20" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Sign in with Google
+    </button>
+    <div id="auth-error"></div>
+  </div>
+</div>
 
 <header>
   <div class="logo">AWS</div>
@@ -414,6 +522,11 @@ header span { font-size: 12px; color: var(--text2); }
       <div class="progress-inner" id="progress-bar" style="width:0%"></div>
     </div>
     <div id="sync-status" style="font-size:11px;color:var(--text2);margin-left:8px;min-width:60px;text-align:right;"></div>
+    <div id="user-badge" class="hidden">
+      <img id="user-avatar" src="" alt="">
+      <span class="user-name" id="user-name"></span>
+      <button id="signout-btn" onclick="signOut()">sign out</button>
+    </div>
   </div>
 </header>
 
@@ -484,25 +597,76 @@ const QUESTIONS = [{"num": 1, "text": "A company collects data for temperature, 
 // Paste your Firebase project config here after creating the project.
 // Get it from: Firebase console → Project settings → Your apps → SDK setup
 const firebaseConfig = {
-  apiKey:            "PASTE_YOUR_API_KEY",
-  authDomain:        "PASTE_YOUR_AUTH_DOMAIN",
-  projectId:         "PASTE_YOUR_PROJECT_ID",
-  storageBucket:     "PASTE_YOUR_STORAGE_BUCKET",
-  messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID",
-  appId:             "PASTE_YOUR_APP_ID"
-};
+    apiKey: "AIzaSyDZOpPxdT42xNWEiUFGOiKQHH5Q9MWTPA0",
+    authDomain: "aws-saa-app-39b9c.firebaseapp.com",
+    projectId: "aws-saa-app-39b9c",
+    storageBucket: "aws-saa-app-39b9c.firebasestorage.app",
+    messagingSenderId: "153177311685",
+    appId: "1:153177311685:web:23202ebf86e25474b2a3ac"
+}
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 
-// Simple user identity — generates a random ID once and stores it locally.
-// Both devices will sync to the same progress if you copy the userId
-// from one device's localStorage to the other (or just use the same browser profile).
-let userId = localStorage.getItem('aws-quiz-user-id');
-if (!userId) {
-  userId = 'user-' + Math.random().toString(36).substr(2, 9);
-  localStorage.setItem('aws-quiz-user-id', userId);
+let userId = null;
+let appInitialized = false;
+
+function showAuthOverlay() {
+  document.getElementById('auth-overlay').classList.remove('hidden');
 }
+
+function hideAuthOverlay() {
+  document.getElementById('auth-overlay').classList.add('hidden');
+}
+
+function setUserBadge(user) {
+  const badge = document.getElementById('user-badge');
+  if (user) {
+    document.getElementById('user-avatar').src = user.photoURL || '';
+    document.getElementById('user-name').textContent = user.displayName || user.email || '';
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+document.getElementById('google-signin-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('google-signin-btn');
+  const errEl = document.getElementById('auth-error');
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+  errEl.textContent = '';
+  try {
+    await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+  } catch (e) {
+    errEl.textContent = e.message || 'Sign-in failed. Please try again.';
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Sign in with Google`;
+  }
+});
+
+async function signOut() {
+  await auth.signOut();
+  userId = null;
+  appInitialized = false;
+  setUserBadge(null);
+  showAuthOverlay();
+}
+
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    userId = user.uid;
+    setUserBadge(user);
+    hideAuthOverlay();
+    if (!appInitialized) {
+      appInitialized = true;
+      await init();
+    }
+  } else {
+    showAuthOverlay();
+  }
+});
 
 function setSyncStatus(msg, color) {
   const el = document.getElementById('sync-status');
@@ -801,7 +965,7 @@ function restartQuiz() {
   loadQuestion(0);
 }
 
-init();
+// init() is called by auth.onAuthStateChanged after Google sign-in
 </script>
 </body>
 </html>
