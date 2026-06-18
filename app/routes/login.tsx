@@ -99,8 +99,9 @@ export default function Login() {
       fetcher.submit({ idToken }, { method: "post", action: "/auth/session" });
     } catch (err) {
       const code = (err as { code?: string })?.code ?? "";
-      // User-closed popup is not an error worth shouting about.
-      if (code !== "auth/popup-closed-by-user" && code !== "auth/cancelled-popup-request") {
+      // User dismissing the Google popup isn't worth shouting about.
+      const cancelled = ["popup_closed", "user_cancel", "auth/popup-closed-by-user"].includes(code);
+      if (!cancelled) {
         setError("Sign-in failed. Please try again.");
       }
       setPopupBusy(false);
