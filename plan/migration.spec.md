@@ -164,6 +164,10 @@ firebase.json                 # update: remove static hosting; add `apphosting` 
 6. `npx -y firebase-tools@latest deploy` (App Hosting + firestore rules + auth).
 - Keep the legacy `index.html` until the deployed app is verified, then remove (it's already excluded from the App Hosting upload via `ignore`).
 
+**Post-deploy gotcha — action POSTs fail with "Bad Request" / "Oops!" (FIXED):**
+React Router v8 has built-in action CSRF protection (`throwIfPotentialCSRFAttack`) that rejects any action POST where the request `Origin` host ≠ `request.url` host, unless the origin is in `allowedActionOrigins`. On App Hosting the public CDN domain (`*.hosted.app`, the `Origin`) never matches the internal Cloud Run host (`*.run.app`, what the container sees as `request.url`), so **every** action (sign-in, answer submit, restart) returned 400 "Bad Request" → masked as the generic "Oops!" page (GETs were unaffected, which is why only sign-in appeared broken). Symptom in logs: `Error: Bad Request at singleFetchAction`.
+Fix: set `allowedActionOrigins` in `react-router.config.ts` to the public domain(s) — `"be-aws-saa-app--aws-saa-app-39b9c.europe-west4.hosted.app"` plus `"**.hosted.app"` (wildcard for rollout/preview subdomains). **Add any custom domain you map here too**, then rebuild/redeploy. Also added a `handleError` export in `entry.server.tsx` so unhandled server errors log the real stack to stderr (prod masks them in the browser).
+
 ---
 
 ## Verification

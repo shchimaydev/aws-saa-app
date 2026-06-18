@@ -1,12 +1,24 @@
 import { PassThrough, Transform } from "node:stream";
 
-import type { AppLoadContext, EntryContext } from "react-router";
+import type {
+  AppLoadContext,
+  EntryContext,
+  HandleErrorFunction,
+} from "react-router";
 import { createReadableStreamFromReadable } from "@react-router/node";
 import { ServerRouter } from "react-router";
 import { renderToPipeableStream } from "react-dom/server";
 import { ServerStyleSheet } from "styled-components";
 
 export const streamTimeout = 5_000;
+
+// Logs the real (unsanitized) error + stack to stderr for every unhandled
+// loader/action error — including single-fetch ones the browser only shows as
+// "Unexpected Server Error". Visible in Cloud Run / App Hosting logs.
+export const handleError: HandleErrorFunction = (error, { request }) => {
+  if (request.signal.aborted) return;
+  console.error("[server error]", error);
+};
 
 export default function handleRequest(
   request: Request,
