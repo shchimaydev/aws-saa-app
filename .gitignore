@@ -1,1 +1,15 @@
 .idea
+.DS_Store
+.env
+
+node_modules/
+
+# React Router
+/.react-router/
+/build/
+
+# Firebase App Hosting (local secret overrides)
+apphosting.emulator.yaml
+.firebase/
+*-debug.log
+firebase-export-*/

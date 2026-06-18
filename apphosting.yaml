@@ -1,0 +1,38 @@
+# Firebase App Hosting (Cloud Run) config — source of truth for the backend.
+# Docs: https://firebase.google.com/docs/app-hosting/configure
+
+runConfig:
+  cpu: 1
+  memoryMiB: 512
+  minInstances: 0
+  maxInstances: 10
+  concurrency: 80
+
+env:
+  # Firebase web config — PUBLIC (already shipped in the legacy client). Needed at
+  # BUILD (Vite inlines import.meta.env.PUBLIC_*) and RUNTIME.
+  - variable: PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyDZOpPxdT42xNWEiUFGOiKQHH5Q9MWTPA0"
+    availability: [BUILD, RUNTIME]
+  - variable: PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "aws-saa-app-39b9c.firebaseapp.com"
+    availability: [BUILD, RUNTIME]
+  - variable: PUBLIC_FIREBASE_PROJECT_ID
+    value: "aws-saa-app-39b9c"
+    availability: [BUILD, RUNTIME]
+  - variable: PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "aws-saa-app-39b9c.firebasestorage.app"
+    availability: [BUILD, RUNTIME]
+  - variable: PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "153177311685"
+    availability: [BUILD, RUNTIME]
+  - variable: PUBLIC_FIREBASE_APP_ID
+    value: "1:153177311685:web:23202ebf86e25474b2a3ac"
+    availability: [BUILD, RUNTIME]
+
+  # Server-only secret for signing the session cookie. Stored in Secret Manager.
+  # Create + grant once before first deploy:
+  #   npx -y firebase-tools@latest apphosting:secrets:set SESSION_SECRET
+  - variable: SESSION_SECRET
+    secret: SESSION_SECRET
+    availability: [RUNTIME]

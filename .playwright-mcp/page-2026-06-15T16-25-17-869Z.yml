@@ -1,0 +1,37 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]: AWS
+    - heading "SAA-C03 Quiz" [level=2] [ref=e5]
+    - paragraph [ref=e6]: Sign in to save and sync your progress across all your devices.
+    - button "Sign in with Google" [ref=e7] [cursor=pointer]:
+      - img [ref=e8]
+      - text: Sign in with Google
+  - banner [ref=e13]:
+    - generic [ref=e14]: AWS
+    - generic [ref=e15]:
+      - heading "SAA-C03 Quiz" [level=1] [ref=e16]
+      - text: AWS Solutions Architect Associate
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - generic [ref=e19]: ✓
+        - generic [ref=e20]: "0"
+      - generic [ref=e21]:
+        - generic [ref=e22]: ✗
+        - generic [ref=e23]: "0"
+      - generic [ref=e24]:
+        - generic [ref=e25]: "0"
+        - generic [ref=e26]: / 684
+  - generic [ref=e27]:
+    - generic [ref=e28]:
+      - generic [ref=e30]: Questions
+      - textbox "Search questions..." [ref=e32]
+      - generic [ref=e33]:
+        - button "All" [ref=e34] [cursor=pointer]
+        - button "Unanswered" [ref=e35] [cursor=pointer]
+        - button "Correct" [ref=e36] [cursor=pointer]
+        - button "Wrong" [ref=e37] [cursor=pointer]
+    - generic [ref=e40]:
+      - generic [ref=e41]:
+        - generic [ref=e42]: Q 1
+        - generic [ref=e43]: Question 1 of 684
+      - button "Submit Answer" [disabled] [ref=e45]
