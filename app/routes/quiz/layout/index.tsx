@@ -1,12 +1,12 @@
 import { Outlet } from "react-router";
-import styled from "styled-components";
 
-import type { Route } from "./+types/layout";
+import type { Route } from "./+types/index";
 import { requireSessionUser } from "~/lib/session.server";
 import { getProgress } from "~/lib/progress.server";
 import { getSidebarSource, TOTAL_QUESTIONS } from "~/lib/questions.server";
 import Header from "~/components/Header";
 import Sidebar from "~/components/Sidebar";
+import { Shell, LayoutGrid, Main } from "./index.styles";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const user = await requireSessionUser(request);
@@ -40,39 +40,10 @@ export async function loader({ request }: Route.LoaderArgs) {
   };
 }
 
-const LayoutGrid = styled.div`
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  flex: 1;
-  min-height: 0;
-  height: calc(100vh - 57px);
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const Main = styled.div`
-  overflow-y: auto;
-  padding: 28px 32px;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: ${({ theme }) => theme.border};
-    border-radius: 4px;
-  }
-
-  @media (max-width: 768px) {
-    padding: 16px;
-  }
-`;
-
 export default function QuizLayout({ loaderData }: Route.ComponentProps) {
   const { user, score, total, items } = loaderData;
   return (
-    <>
+    <Shell>
       <Header
         correct={score.correct}
         wrong={score.wrong}
@@ -85,6 +56,6 @@ export default function QuizLayout({ loaderData }: Route.ComponentProps) {
           <Outlet />
         </Main>
       </LayoutGrid>
-    </>
+    </Shell>
   );
 }

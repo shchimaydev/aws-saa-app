@@ -26,11 +26,13 @@ export const SectionHeader = styled.div`
   display: flex;
   gap: 6px;
   align-items: center;
+  flex-shrink: 0;
 `;
 
 export const Search = styled.div`
   padding: 10px 12px;
   border-bottom: 1px solid ${({ theme }) => theme.border};
+  flex-shrink: 0;
 
   input {
     width: 100%;
@@ -57,6 +59,7 @@ export const FilterRow = styled.div`
   display: flex;
   gap: 5px;
   flex-wrap: wrap;
+  flex-shrink: 0;
 `;
 
 export const FilterButton = styled.button<{ $active: boolean }>`
@@ -78,8 +81,12 @@ export const FilterButton = styled.button<{ $active: boolean }>`
 `;
 
 export const List = styled.div`
-  overflow-y: auto;
+  position: relative;
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Keep the scroll fully contained in the sidebar — don't chain to the page. */
+  overscroll-behavior: contain;
 
   &::-webkit-scrollbar {
     width: 4px;

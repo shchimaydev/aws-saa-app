@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 
-import type { Route } from "./+types/auth.session";
+import type { Route } from "./+types/index";
 import { createUserSession } from "~/lib/session.server";
 
 // No UI — this route only exchanges an ID token for a session cookie.

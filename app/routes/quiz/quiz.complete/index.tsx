@@ -1,6 +1,6 @@
 import { redirect, useNavigation } from "react-router";
 
-import type { Route } from "./+types/quiz.complete";
+import type { Route } from "./+types/index";
 import { requireUserId } from "~/lib/session.server";
 import { getProgress, resetProgress } from "~/lib/progress.server";
 import { TOTAL_QUESTIONS } from "~/lib/questions.server";

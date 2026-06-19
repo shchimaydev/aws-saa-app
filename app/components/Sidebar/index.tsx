@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router";
 
 import {
@@ -32,6 +32,26 @@ export default function Sidebar({ items }: { items: SidebarItem[] }) {
   const filter = searchParams.get("filter") ?? "all";
 
   const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
+
+  const listRef = useRef<HTMLDivElement>(null);
+  const activeRef = useRef<HTMLAnchorElement | null>(null);
+  const didInit = useRef(false);
+
+  // Keep the active question visible in the list, ideally ~5th from the top.
+  useEffect(() => {
+    const list = listRef.current;
+    const el = activeRef.current;
+    if (!list || !el) return;
+
+    // Place the active item 5th from the top (4 items above it).
+    const ITEMS_ABOVE = 4;
+    const target = el.offsetTop - ITEMS_ABOVE * el.offsetHeight;
+    const max = list.scrollHeight - list.clientHeight;
+    const top = Math.max(0, Math.min(target, max));
+
+    list.scrollTo({ top, behavior: didInit.current ? "smooth" : "auto" });
+    didInit.current = true;
+  }, [activeNum, items]);
 
   // Debounce writing the search term to the URL (drives server-side filtering).
   useEffect(() => {
@@ -89,18 +109,22 @@ export default function Sidebar({ items }: { items: SidebarItem[] }) {
         ))}
       </FilterRow>
 
-      <List>
-        {items.map((item) => (
-          <Item
-            key={item.num}
-            to={qs ? `/quiz/${item.num}?${qs}` : `/quiz/${item.num}`}
-            $active={item.num === activeNum}
-          >
-            <Dot $result={item.result} />
-            <span className="q-num">Q{item.num}</span>
-            <span className="q-preview">{item.preview}...</span>
-          </Item>
-        ))}
+      <List ref={listRef}>
+        {items.map((item) => {
+          const isActive = item.num === activeNum;
+          return (
+            <Item
+              key={item.num}
+              ref={isActive ? activeRef : undefined}
+              to={qs ? `/quiz/${item.num}?${qs}` : `/quiz/${item.num}`}
+              $active={isActive}
+            >
+              <Dot $result={item.result} />
+              <span className="q-num">Q{item.num}</span>
+              <span className="q-preview">{item.preview}...</span>
+            </Item>
+          );
+        })}
       </List>
     </Aside>
   );

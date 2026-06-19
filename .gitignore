@@ -13,3 +13,5 @@ apphosting.emulator.yaml
 .firebase/
 *-debug.log
 firebase-export-*/
+
+.playwright-mcp/
