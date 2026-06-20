@@ -33,13 +33,22 @@ export async function createUserSession(idToken: string, redirectTo: string) {
   });
 }
 
-/** Return the signed-in user's uid, or null if there's no valid session. */
-export async function getUserId(request: Request): Promise<string | null> {
+/**
+ * Return the signed-in user's uid, or null if there's no valid session.
+ *
+ * `checkRevoked` defaults to `false`: the cookie's signature + expiry are
+ * verified locally (no network), which is what page reads/navigations want.
+ * Pass `true` on sensitive mutations to make a round-trip to the Auth backend
+ * and reject signed-out / disabled users.
+ */
+export async function getUserId(
+  request: Request,
+  checkRevoked = false,
+): Promise<string | null> {
   const value = await sessionCookie.parse(request.headers.get("Cookie"));
   if (!value || typeof value !== "string") return null;
   try {
-    // checkRevoked=true so signed-out / disabled users are rejected.
-    const decoded = await adminAuth.verifySessionCookie(value, true);
+    const decoded = await adminAuth.verifySessionCookie(value, checkRevoked);
     return decoded.uid;
   } catch {
     return null;
@@ -50,8 +59,9 @@ export async function getUserId(request: Request): Promise<string | null> {
 export async function requireUserId(
   request: Request,
   redirectTo = "/login",
+  checkRevoked = false,
 ): Promise<string> {
-  const uid = await getUserId(request);
+  const uid = await getUserId(request, checkRevoked);
   if (!uid) throw redirect(redirectTo);
   return uid;
 }
@@ -67,11 +77,14 @@ export interface SessionUser {
  * Verify the session and return the user's profile from the cookie's claims
  * (Google sign-in populates name/picture/email — no extra getUser() call).
  */
-export async function getSessionUser(request: Request): Promise<SessionUser | null> {
+export async function getSessionUser(
+  request: Request,
+  checkRevoked = false,
+): Promise<SessionUser | null> {
   const value = await sessionCookie.parse(request.headers.get("Cookie"));
   if (!value || typeof value !== "string") return null;
   try {
-    const d = await adminAuth.verifySessionCookie(value, true);
+    const d = await adminAuth.verifySessionCookie(value, checkRevoked);
     return {
       uid: d.uid,
       name: (d.name as string) ?? (d.email as string) ?? "",
@@ -87,8 +100,9 @@ export async function getSessionUser(request: Request): Promise<SessionUser | nu
 export async function requireSessionUser(
   request: Request,
   redirectTo = "/login",
+  checkRevoked = false,
 ): Promise<SessionUser> {
-  const user = await getSessionUser(request);
+  const user = await getSessionUser(request, checkRevoked);
   if (!user) throw redirect(redirectTo);
   return user;
 }

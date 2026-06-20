@@ -23,7 +23,7 @@ function progressRef(uid: string) {
   return adminDb.collection("progress").doc(uid);
 }
 
-export async function getProgress(uid: string): Promise<Progress> {
+async function readProgress(uid: string): Promise<Progress> {
   const snap = await progressRef(uid).get();
   if (!snap.exists) return { results: {}, score: { correct: 0, wrong: 0 }, currentIdx: 0 };
   const data = snap.data() ?? {};
@@ -35,6 +35,26 @@ export async function getProgress(uid: string): Promise<Progress> {
     },
     currentIdx: typeof data.currentIdx === "number" ? data.currentIdx : 0,
   };
+}
+
+// During a single navigation, React Router runs every matched loader against
+// the *same* Request instance. Both the quiz layout and the `$num` loader need
+// progress, so we memoize the read per Request to collapse them into one
+// Firestore fetch. The WeakMap evicts entries when the Request is GC'd, and the
+// in-flight Promise is stored synchronously so parallel loaders share it.
+const progressByRequest = new WeakMap<Request, Promise<Progress>>();
+
+/**
+ * Read the user's progress. Pass `request` to dedupe repeated reads within a
+ * single navigation/request; omit it for one-off reads (e.g. actions).
+ */
+export function getProgress(uid: string, request?: Request): Promise<Progress> {
+  if (!request) return readProgress(uid);
+  const cached = progressByRequest.get(request);
+  if (cached) return cached;
+  const pending = readProgress(uid);
+  progressByRequest.set(request, pending);
+  return pending;
 }
 
 /**

@@ -21,7 +21,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const uid = await requireUserId(request);
+  // Sensitive write — verify revocation against the Auth backend.
+  const uid = await requireUserId(request, "/login", true);
   await resetProgress(uid);
   return redirect("/quiz/1");
 }

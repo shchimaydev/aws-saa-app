@@ -9,4 +9,6 @@ export default [
     route(":num", "routes/quiz/quiz.$num/index.tsx"),
     route("complete", "routes/quiz/quiz.complete/index.tsx"),
   ]),
+  // Resource route for the sidebar's infinite scroll (no layout chrome).
+  route("quiz/api/sidebar", "routes/quiz/api.sidebar/index.tsx"),
 ] satisfies RouteConfig;

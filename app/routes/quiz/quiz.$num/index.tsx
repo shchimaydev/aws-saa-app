@@ -19,7 +19,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const question = getQuestion(num);
   if (!question) throw new Response("Not Found", { status: 404 });
 
-  const progress = await getProgress(uid);
+  const progress = await getProgress(uid, request);
   const storedResult = progress.results[String(num - 1)] ?? null;
   const answered = storedResult !== null;
 
@@ -45,7 +45,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
-  const uid = await requireUserId(request);
+  // Sensitive write — verify revocation against the Auth backend.
+  const uid = await requireUserId(request, "/login", true);
   const num = Number(params.num);
   const question = getQuestion(num);
   if (!question) throw new Response("Not Found", { status: 404 });

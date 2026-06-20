@@ -80,24 +80,18 @@ export const FilterButton = styled.button<{ $active: boolean }>`
   }
 `;
 
-export const List = styled.div`
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  /* Keep the scroll fully contained in the sidebar — don't chain to the page. */
-  overscroll-behavior: contain;
+/** Fixed row height — must stay in sync with the value passed to VirtualizedList. */
+export const ITEM_HEIGHT = 38;
 
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: ${({ theme }) => theme.border};
-    border-radius: 4px;
-  }
+export const Empty = styled.div`
+  padding: 16px 12px;
+  font-size: 12px;
+  color: ${({ theme }) => theme.text2};
 `;
 
 export const Item = styled(Link)<{ $active: boolean }>`
+  height: 100%;
+  box-sizing: border-box;
   padding: 9px 12px;
   border-bottom: 1px solid ${({ theme }) => theme.border};
   cursor: pointer;
@@ -127,6 +121,33 @@ export const Item = styled(Link)<{ $active: boolean }>`
     text-overflow: ellipsis;
     white-space: nowrap;
     flex: 1;
+  }
+`;
+
+/** Stand-in row shown while a window's data is being fetched. */
+export const Placeholder = styled.div`
+  height: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  border-left: 3px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  opacity: 0.5;
+
+  .q-num {
+    font-weight: 700;
+    color: ${({ theme }) => theme.text2};
+    min-width: 28px;
+    font-size: 11px;
+  }
+  .q-bar {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: ${({ theme }) => theme.border};
   }
 `;
 
