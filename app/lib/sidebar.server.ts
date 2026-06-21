@@ -44,7 +44,8 @@ export function buildSidebarData({
   const query = q.trim().toLowerCase();
   const filtering = query !== "" || filter !== "all";
 
-  const resultOf = (num: number): Result | null => results[String(num - 1)] ?? null;
+  const resultOf = (num: number): Result | null =>
+    results[String(num - 1)] ?? null;
 
   if (filtering) {
     const items = getAllSidebarSource()
@@ -56,7 +57,11 @@ export function buildSidebarData({
         if (query && !s.textLower.includes(query)) return false;
         return true;
       })
-      .map((s) => ({ num: s.num, preview: s.preview, result: resultOf(s.num) }));
+      .map((s) => ({
+        num: s.num,
+        preview: s.preview,
+        result: resultOf(s.num),
+      }));
 
     // A filter/search result is rendered as its own self-contained list, so its
     // `start`/`total` are local to the result set (not the full bank).

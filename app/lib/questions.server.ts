@@ -20,7 +20,8 @@ export const TOTAL_QUESTIONS = QUESTIONS.length;
  * out-of-range numbers so callers can 404. (nums are contiguous 1..TOTAL.)
  */
 export function getQuestion(num: number): Question | undefined {
-  if (!Number.isInteger(num) || num < 1 || num > QUESTIONS.length) return undefined;
+  if (!Number.isInteger(num) || num < 1 || num > QUESTIONS.length)
+    return undefined;
   return QUESTIONS[num - 1];
 }
 
@@ -68,7 +69,8 @@ export interface SidebarWindow {
   hasAfter: boolean;
 }
 
-const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(n, hi));
+const clamp = (n: number, lo: number, hi: number) =>
+  Math.max(lo, Math.min(n, hi));
 
 /**
  * A {@link SIDEBAR_WINDOW_SIZE}-entry window of the sidebar index, anchored on

@@ -1,128 +1,252 @@
 import styled from "styled-components";
 
 export const Bar = styled.header`
-  background: ${({ theme }) => theme.surface};
-  border-bottom: 1px solid ${({ theme }) => theme.border};
-  padding: 12px 20px;
+  background: ${({ theme }) => theme.headerBg};
+  border-bottom: 1px solid ${({ theme }) => theme.hairline};
+  padding: 11px 15px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 11px;
   flex-shrink: 0;
   position: sticky;
   top: 0;
   z-index: 100;
 `;
 
-export const Logo = styled.div`
-  width: 34px;
-  height: 34px;
-  background: ${({ theme }) => theme.accent};
-  border-radius: 7px;
+// Opens the question-list drawer; only shown on mobile, where the Sidebar is
+// off-canvas. Hidden from the tablet breakpoint up, where the rail is static.
+export const MenuButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 900;
-  font-size: 12px;
-  color: #000;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: ${({ theme }) => theme.text};
+  cursor: pointer;
   flex-shrink: 0;
-  letter-spacing: -0.5px;
+
+  @media (min-width: 768px) {
+    display: none;
+  }
 `;
 
-export const TitleBlock = styled.div`
-  h1 {
-    font-size: 15px;
-    font-weight: 700;
-  }
-  span {
-    font-size: 12px;
-    color: ${({ theme }) => theme.text2};
+// Branding cluster: icon mark + "AWS Prep" wordmark + exam badge.
+export const Brand = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+`;
+
+export const Logo = styled.div`
+  width: 24px;
+  height: 24px;
+  background: ${({ theme }) => theme.accent};
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  flex-shrink: 0;
+`;
+
+export const Wordmark = styled.span`
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: ${({ theme }) => theme.text};
+`;
+
+export const ExamBadge = styled.span`
+  background: rgba(255, 153, 0, 0.1);
+  color: ${({ theme }) => theme.accent};
+  font-family: ${({ theme }) => theme.fontMono};
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+
+  /* Declutter the mobile header — the exam name is implied by the app. */
+  @media (max-width: 640px) {
+    display: none;
   }
 `;
 
 export const ScoreBar = styled.div`
   margin-left: auto;
   display: flex;
-  gap: 6px;
+  gap: 11px;
   align-items: center;
 `;
 
-export const Pill = styled.div<{ $variant: "correct" | "wrong" | "total" }>`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: ${({ theme }) => theme.surface2};
-  border: 1px solid ${({ theme }) => theme.border};
-  border-radius: 20px;
-  padding: 5px 12px;
-  font-size: 13px;
+export const Answered = styled.span`
+  font-family: ${({ theme }) => theme.fontMono};
+  font-size: 11px;
+  color: ${({ theme }) => theme.textMono};
+  white-space: nowrap;
 
-  border-color: ${({ theme, $variant }) =>
-    $variant === "correct"
-      ? theme.green
-      : $variant === "wrong"
-        ? theme.red
-        : theme.accent};
-
-  .num {
-    font-weight: 700;
-    font-size: 16px;
-    color: ${({ theme, $variant }) =>
-      $variant === "correct"
-        ? theme.green
-        : $variant === "wrong"
-          ? theme.red
-          : theme.accent};
+  /* The exact count is secondary on a phone; keep the pills, drop the text. */
+  @media (max-width: 520px) {
+    display: none;
   }
 `;
 
-export const ProgressOuter = styled.div`
-  flex: 1;
-  max-width: 160px;
-  background: ${({ theme }) => theme.surface2};
-  border-radius: 4px;
-  height: 6px;
-  overflow: hidden;
+// Auth lives in the design's whitespace — the avatar is the only persistent
+// affordance; the sign-out action is tucked into a dropdown so the header stays
+// uncluttered, especially on mobile.
+export const UserMenu = styled.div`
+  position: relative;
+  padding-left: 11px;
+  border-left: 1px solid ${({ theme }) => theme.hairline};
 `;
 
-export const ProgressInner = styled.div<{ $pct: number }>`
-  height: 100%;
-  width: ${({ $pct }) => $pct}%;
-  background: ${({ theme }) => theme.accent};
-  border-radius: 4px;
-  transition: width 0.4s ease;
-`;
-
-export const UserBadge = styled.div`
+export const UserTrigger = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
-  background: ${({ theme }) => theme.surface2};
-  border: 1px solid ${({ theme }) => theme.border};
-  border-radius: 20px;
-  padding: 4px 12px 4px 4px;
-  font-size: 13px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: ${({ theme }) => theme.text2};
 
-  img {
-    width: 26px;
-    height: 26px;
+  img,
+  .avatar-fallback {
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: ${({ theme }) => theme.accent};
+    color: #000;
+    font-size: 12px;
+    font-weight: 600;
   }
 
   .user-name {
-    color: ${({ theme }) => theme.text2};
-    max-width: 100px;
+    font-size: 12px;
+    max-width: 110px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+
+    /* On a phone the avatar alone is enough — the name lives in the dropdown. */
+    @media (max-width: 640px) {
+      display: none;
+    }
+  }
+`;
+
+// Desktop: a compact dropdown anchored under the avatar.
+// Mobile: promotes to a full-screen modal so the menu is easy to tap and read.
+export const UserDropdown = styled.div`
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: ${({ theme }) => theme.headerBg};
+  border: 1px solid ${({ theme }) => theme.hairline};
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  z-index: 200;
+
+  @media (max-width: 640px) {
+    position: fixed;
+    inset: 0;
+    top: 0;
+    min-width: 0;
+    border: none;
+    border-radius: 0;
+    padding: 16px;
+    gap: 8px;
+    box-shadow: none;
+    z-index: 1000;
+  }
+`;
+
+// Holds the account name and the close button. The close button only matters in
+// the mobile full-screen modal; on desktop the header collapses to just the name.
+export const DropdownHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid ${({ theme }) => theme.hairline};
+  margin-bottom: 2px;
+
+  @media (max-width: 640px) {
+    padding-bottom: 12px;
+    margin-bottom: 8px;
+  }
+`;
+
+// Shows the full account name inside the menu — the trigger hides it on mobile.
+export const DropdownName = styled.div`
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: ${({ theme }) => theme.textMono};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 640px) {
+    font-size: 15px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.text};
+  }
+`;
+
+// Only visible in the mobile full-screen modal.
+export const DropdownClose = styled.button`
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  color: ${({ theme }) => theme.text};
+  cursor: pointer;
+
+  @media (max-width: 640px) {
+    display: flex;
   }
 `;
 
 export const SignOutButton = styled.button`
+  width: 100%;
+  text-align: left;
   background: none;
   border: none;
+  border-radius: 4px;
   color: ${({ theme }) => theme.accent2};
   cursor: pointer;
-  font-size: 12px;
-  padding: 0;
+  font-size: 13px;
+  padding: 8px 10px;
+
+  &:hover {
+    background: ${({ theme }) => theme.hairline};
+  }
+
+  @media (max-width: 640px) {
+    font-size: 16px;
+    padding: 14px 12px;
+    border: 1px solid ${({ theme }) => theme.hairline};
+  }
 `;

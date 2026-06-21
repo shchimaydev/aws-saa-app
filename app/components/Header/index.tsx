@@ -1,15 +1,23 @@
+import { useEffect, useRef, useState } from "react";
 import { Form } from "react-router";
+import { Layers, Menu, X } from "lucide-react";
 
 import { signOutClient } from "~/lib/firebase.client";
 import {
   Bar,
+  MenuButton,
+  Brand,
   Logo,
-  TitleBlock,
+  Wordmark,
+  ExamBadge,
   ScoreBar,
-  Pill,
-  ProgressOuter,
-  ProgressInner,
-  UserBadge,
+  Answered,
+  UserMenu,
+  UserTrigger,
+  UserDropdown,
+  DropdownHeader,
+  DropdownName,
+  DropdownClose,
   SignOutButton,
 } from "./index.styles";
 
@@ -23,45 +31,105 @@ interface HeaderProps {
   wrong: number;
   total: number;
   user: HeaderUser;
+  onMenuClick?: () => void;
 }
 
-export default function Header({ correct, wrong, total, user }: HeaderProps) {
+export default function Header({
+  correct,
+  wrong,
+  total,
+  user,
+  onMenuClick,
+}: HeaderProps) {
   const answered = correct + wrong;
-  const pct = total > 0 ? Math.round((answered / total) * 100) : 0;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function handlePointerDown(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [menuOpen]);
 
   return (
     <Bar>
-      <Logo>AWS</Logo>
-      <TitleBlock>
-        <h1>SAA-C03 Quiz</h1>
-        <span>AWS Solutions Architect Associate</span>
-      </TitleBlock>
+      <MenuButton
+        type="button"
+        aria-label="Open question list"
+        onClick={onMenuClick}
+      >
+        <Menu size={20} />
+      </MenuButton>
+
+      <Brand>
+        <Logo>
+          <Layers size={14} />
+        </Logo>
+        <Wordmark>AWS Prep</Wordmark>
+        <ExamBadge>SAA-C03</ExamBadge>
+      </Brand>
 
       <ScoreBar>
-        <Pill $variant="correct">
-          <span>✓</span>
-          <span className="num">{correct}</span>
-        </Pill>
-        <Pill $variant="wrong">
-          <span>✗</span>
-          <span className="num">{wrong}</span>
-        </Pill>
-        <Pill $variant="total">
-          <span className="num">{answered}</span>
-          <span>/ {total}</span>
-        </Pill>
+        <Answered>
+          {answered}/{total} answered
+        </Answered>
 
-        <ProgressOuter>
-          <ProgressInner $pct={pct} />
-        </ProgressOuter>
+        <UserMenu ref={menuRef}>
+          <UserTrigger
+            type="button"
+            aria-label="Account menu"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            {user.photoURL ? (
+              <img src={user.photoURL} alt="" />
+            ) : (
+              <span className="avatar-fallback">
+                {user.name.charAt(0).toUpperCase()}
+              </span>
+            )}
+            <span className="user-name">{user.name}</span>
+          </UserTrigger>
 
-        <UserBadge>
-          {user.photoURL ? <img src={user.photoURL} alt="" /> : null}
-          <span className="user-name">{user.name}</span>
-          <Form method="post" action="/logout" onSubmit={() => void signOutClient()}>
-            <SignOutButton type="submit">sign out</SignOutButton>
-          </Form>
-        </UserBadge>
+          {menuOpen ? (
+            <UserDropdown role="menu">
+              <DropdownHeader>
+                <DropdownName>{user.name}</DropdownName>
+                <DropdownClose
+                  type="button"
+                  aria-label="Close menu"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <X size={20} />
+                </DropdownClose>
+              </DropdownHeader>
+              <Form
+                method="post"
+                action="/logout"
+                onSubmit={() => void signOutClient()}
+              >
+                <SignOutButton type="submit" role="menuitem">
+                  Sign out
+                </SignOutButton>
+              </Form>
+            </UserDropdown>
+          ) : null}
+        </UserMenu>
       </ScoreBar>
     </Bar>
   );

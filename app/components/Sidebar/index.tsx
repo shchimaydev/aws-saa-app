@@ -1,17 +1,35 @@
 import { useEffect, useMemo, useState } from "react";
 import { useFetcher, useParams, useSearchParams } from "react-router";
+import {
+  CheckCircle2,
+  ChevronRight,
+  Circle,
+  Search as SearchIcon,
+  X,
+  XCircle,
+} from "lucide-react";
 
 import VirtualizedList from "~/components/VirtualizedList";
+import { theme } from "~/styles/theme";
 import {
   Aside,
-  SectionHeader,
+  HeadBlock,
+  HeadRow,
+  Titles,
+  CloseButton,
+  Stats,
+  Stat,
   Search,
   FilterRow,
   FilterButton,
+  ListWrap,
   Item,
-  Dot,
   Empty,
   Placeholder,
+  Footer,
+  FooterRow,
+  Track,
+  Fill,
   ITEM_HEIGHT,
 } from "./index.styles";
 
@@ -44,6 +62,14 @@ const FILTERS: ReadonlyArray<readonly [string, string]> = [
   ["wrong", "Wrong"],
 ];
 
+/** The status glyph shown at the start of each row. */
+function StatusIcon({ result }: { result: SidebarItem["result"] }) {
+  if (result === "correct")
+    return <CheckCircle2 size={14} color={theme.green} />;
+  if (result === "wrong") return <XCircle size={14} color={theme.red} />;
+  return <Circle size={14} color={theme.textMono} />;
+}
+
 /**
  * Map a server payload to the view the list renders. A browse window sits at
  * its absolute position in the 684-question canvas; a filter/search result is
@@ -60,12 +86,27 @@ function toView(d: SidebarData): WindowView {
   return { items: d.items, startIndex: 0, totalCount: d.items.length };
 }
 
-export default function Sidebar({ sidebar }: { sidebar: SidebarData }) {
+export default function Sidebar({
+  sidebar,
+  correct,
+  wrong,
+  open,
+  onClose,
+}: {
+  sidebar: SidebarData;
+  correct: number;
+  wrong: number;
+  open: boolean;
+  onClose: () => void;
+}) {
   const [searchParams, setSearchParams] = useSearchParams();
   const params = useParams();
   const activeNum = params.num ? Number(params.num) : null;
   const filter = searchParams.get("filter") ?? "all";
-  const q = searchParams.get("q") ?? "";
+
+  const total = sidebar.total;
+  const answered = correct + wrong;
+  const pct = total > 0 ? Math.round((answered / total) * 100) : 0;
 
   // Browsing paginates over the full bank; an active search/filter is the full
   // matching set and never asks for more.
@@ -134,9 +175,18 @@ export default function Sidebar({ sidebar }: { sidebar: SidebarData }) {
           prefetch="intent"
           $active={isActive}
         >
-          <Dot $result={item.result} />
-          <span className="q-num">Q{item.num}</span>
-          <span className="q-preview">{item.preview}...</span>
+          <span className="status">
+            <StatusIcon result={item.result} />
+          </span>
+          <span className="mid">
+            <span className="q-num">Q{String(item.num).padStart(2, "0")}</span>
+            <span className="q-preview">{item.preview}...</span>
+          </span>
+          {isActive ? (
+            <span className="chevron">
+              <ChevronRight size={12} />
+            </span>
+          ) : null}
         </Item>
       );
     },
@@ -146,54 +196,97 @@ export default function Sidebar({ sidebar }: { sidebar: SidebarData }) {
   // Absolute index → its 1-based question number while its data is in flight.
   const renderPlaceholder = (index: number) => (
     <Placeholder>
-      <span className="q-num">Q{index + 1}</span>
-      <span className="q-bar" />
+      <span className="status">
+        <Circle size={14} />
+      </span>
+      <span className="mid">
+        <span className="q-num">Q{String(index + 1).padStart(2, "0")}</span>
+        <span className="q-bar" />
+      </span>
     </Placeholder>
   );
 
   return (
-    <Aside>
-      <SectionHeader>
-        <span>Questions</span>
-      </SectionHeader>
+    <Aside $open={open}>
+      <HeadBlock>
+        <HeadRow>
+          <Titles>
+            <span className="kicker">SAA-C03</span>
+            <h2>Solutions Architect</h2>
+          </Titles>
+          <CloseButton type="button" aria-label="Close" onClick={onClose}>
+            <X size={18} />
+          </CloseButton>
+        </HeadRow>
 
-      <Search>
-        <input
-          type="text"
-          placeholder="Search questions..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </Search>
+        <Stats>
+          <Stat $variant="correct">
+            <span className="label">Correct</span>
+            <span className="value">{correct}</span>
+          </Stat>
+          <Stat $variant="wrong">
+            <span className="label">Wrong</span>
+            <span className="value">{wrong}</span>
+          </Stat>
+          <Stat $variant="total">
+            <span className="label">Total</span>
+            <span className="value">{total}</span>
+          </Stat>
+        </Stats>
 
-      <FilterRow>
-        {FILTERS.map(([key, label]) => (
-          <FilterButton
-            key={key}
-            type="button"
-            $active={filter === key}
-            onClick={() => selectFilter(key)}
-          >
-            {label}
-          </FilterButton>
-        ))}
-      </FilterRow>
+        <Search>
+          <SearchIcon className="search-icon" size={13} />
+          <input
+            type="text"
+            placeholder="Search questions..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </Search>
 
-      {view.items.length === 0 ? (
-        <Empty>No matching questions.</Empty>
-      ) : (
-        <VirtualizedList
-          totalCount={view.totalCount}
-          startIndex={view.startIndex}
-          items={view.items}
-          itemHeight={ITEM_HEIGHT}
-          getKey={(it) => it.num}
-          renderItem={renderItem}
-          renderPlaceholder={filtering ? undefined : renderPlaceholder}
-          scrollToIndex={activeNum != null ? activeNum - 1 : null}
-          onNeedRange={filtering ? undefined : handleNeedRange}
-        />
-      )}
+        <FilterRow>
+          {FILTERS.map(([key, label]) => (
+            <FilterButton
+              key={key}
+              type="button"
+              $active={filter === key}
+              onClick={() => selectFilter(key)}
+            >
+              {label}
+            </FilterButton>
+          ))}
+        </FilterRow>
+      </HeadBlock>
+
+      <ListWrap>
+        {view.items.length === 0 ? (
+          <Empty>No matching questions.</Empty>
+        ) : (
+          <VirtualizedList
+            totalCount={view.totalCount}
+            startIndex={view.startIndex}
+            items={view.items}
+            itemHeight={ITEM_HEIGHT}
+            getKey={(it) => it.num}
+            renderItem={renderItem}
+            renderPlaceholder={filtering ? undefined : renderPlaceholder}
+            scrollToIndex={activeNum != null ? activeNum - 1 : null}
+            onNeedRange={filtering ? undefined : handleNeedRange}
+          />
+        )}
+      </ListWrap>
+
+      <Footer>
+        <FooterRow>
+          <span className="label">Progress</span>
+          <span className="count">
+            {answered}/{total}
+          </span>
+        </FooterRow>
+        <Track>
+          <Fill $pct={pct} />
+        </Track>
+      </Footer>
     </Aside>
   );
 }

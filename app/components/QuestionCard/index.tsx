@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
 import { Form, useSearchParams } from "react-router";
+import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 
 import OptionButton from "~/components/OptionButton";
 import type { OptionVariant } from "~/components/OptionButton/index.styles";
+import { nextHref, prevHref } from "~/lib/quizNav";
 import {
   Header,
   Badge,
-  Position,
+  Tag,
   Text,
   OptionsGrid,
   ActionRow,
+  Spacer,
+  PrevLink,
+  PrevDisabled,
   SubmitButton,
   NextLink,
   ResultBadge,
@@ -84,19 +89,16 @@ export default function QuestionCard({
   }
 
   const qs = searchParams.toString();
-  const nextHref =
-    num < total
-      ? `/quiz/${num + 1}${qs ? `?${qs}` : ""}`
-      : `/quiz/complete${qs ? `?${qs}` : ""}`;
+  const prev = prevHref(num, qs);
+  const next = nextHref(num, total, qs);
 
   return (
     <div>
       <Header>
-        <Badge>Q {num}</Badge>
-        {multi ? <Badge $multi>Choose Multiple</Badge> : null}
-        <Position>
-          Question {num} of {total}
-        </Position>
+        <Badge>
+          Q{String(num).padStart(2, "0")} / {total}
+        </Badge>
+        {multi ? <Tag>Choose Multiple</Tag> : null}
       </Header>
 
       <Text>{text}</Text>
@@ -123,24 +125,40 @@ export default function QuestionCard({
           ))}
 
         <ActionRow>
-          <SubmitButton
-            type="submit"
-            disabled={revealed || selected.size === 0 || submitting}
-          >
-            Submit Answer
-          </SubmitButton>
+          {prev ? (
+            <PrevLink to={prev}>
+              <ChevronLeft size={14} />
+              Prev
+            </PrevLink>
+          ) : (
+            <PrevDisabled aria-disabled="true">
+              <ChevronLeft size={14} />
+              Prev
+            </PrevDisabled>
+          )}
 
           {revealed && result ? (
             <ResultBadge $result={result}>
-              {result === "correct" ? "✓ Correct!" : "✗ Incorrect"}
+              {result === "correct" ? <Check size={14} /> : <X size={14} />}
+              {result === "correct" ? "Correct!" : "Incorrect"}
             </ResultBadge>
           ) : null}
 
+          <Spacer />
+
           {revealed ? (
-            <NextLink to={nextHref}>
-              {num < total ? "Next Question →" : "Finish →"}
+            <NextLink to={next}>
+              {num < total ? "Next" : "Finish"}
+              <ChevronRight size={14} />
             </NextLink>
-          ) : null}
+          ) : (
+            <SubmitButton
+              type="submit"
+              disabled={selected.size === 0 || submitting}
+            >
+              Submit Answer
+            </SubmitButton>
+          )}
         </ActionRow>
       </Form>
     </div>

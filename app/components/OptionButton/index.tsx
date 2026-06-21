@@ -1,7 +1,11 @@
+import { Check, X } from "lucide-react";
+
 import {
+  Wrap,
   OptBtn,
   Letter,
   OptText,
+  Mark,
   Explanation,
   type OptionVariant,
 } from "./index.styles";
@@ -24,15 +28,32 @@ export default function OptionButton({
   disabled,
   onClick,
 }: OptionButtonProps) {
+  const hasExp = Boolean(explanation);
+
   return (
-    <OptBtn type="button" $variant={variant} disabled={disabled} onClick={onClick}>
-      <Letter>{letter}</Letter>
-      <OptText>
-        {text}
-        {explanation ? (
-          <Explanation $variant={variant}>{explanation}</Explanation>
+    <Wrap>
+      <OptBtn
+        type="button"
+        $variant={variant}
+        $hasExp={hasExp}
+        disabled={disabled}
+        onClick={onClick}
+      >
+        <Letter $variant={variant}>{letter}</Letter>
+        <OptText>{text}</OptText>
+        {variant === "correct" ? (
+          <Mark $variant="correct">
+            <Check size={16} />
+          </Mark>
+        ) : variant === "wrong" ? (
+          <Mark $variant="wrong">
+            <X size={16} />
+          </Mark>
         ) : null}
-      </OptText>
-    </OptBtn>
+      </OptBtn>
+      {explanation ? (
+        <Explanation $variant={variant}>{explanation}</Explanation>
+      ) : null}
+    </Wrap>
   );
 }

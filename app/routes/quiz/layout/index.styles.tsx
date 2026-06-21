@@ -12,20 +12,21 @@ export const Shell = styled.div`
 
 export const LayoutGrid = styled.div`
   display: grid;
-  grid-template-columns: 280px 1fr;
-  /* Fill the space left under the (flex-shrink:0) Header without hard-coding
-     its height; min-height:0 lets the Sidebar/Main scroll containers shrink. */
+  /* Mobile-first: single column; the Sidebar overlays as a drawer. The static
+     280px rail appears from the tablet breakpoint up. min-height:0 lets the
+     Sidebar/Main scroll containers shrink under the (flex-shrink:0) Header. */
+  grid-template-columns: 1fr;
   flex: 1;
   min-height: 0;
 
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+  @media (min-width: 768px) {
+    grid-template-columns: 280px 1fr;
   }
 `;
 
 export const Main = styled.div`
   overflow-y: auto;
-  padding: 28px 32px;
+  padding: 16px;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -35,7 +36,25 @@ export const Main = styled.div`
     border-radius: 4px;
   }
 
-  @media (max-width: 768px) {
-    padding: 16px;
+  @media (min-width: 768px) {
+    padding: 28px 32px;
+  }
+`;
+
+// Scrim behind the off-canvas Sidebar drawer on mobile. Desktop keeps the rail
+// static, so the backdrop never shows there.
+export const Backdrop = styled.div<{ $open: boolean }>`
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: ${({ $open }) => ($open ? 1 : 0)};
+  visibility: ${({ $open }) => ($open ? "visible" : "hidden")};
+  transition:
+    opacity 0.25s ease,
+    visibility 0.25s ease;
+
+  @media (min-width: 768px) {
+    display: none;
   }
 `;

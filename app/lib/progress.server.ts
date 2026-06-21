@@ -17,7 +17,11 @@ export interface Progress {
   currentIdx: number;
 }
 
-const EMPTY: Progress = { results: {}, score: { correct: 0, wrong: 0 }, currentIdx: 0 };
+const EMPTY: Progress = {
+  results: {},
+  score: { correct: 0, wrong: 0 },
+  currentIdx: 0,
+};
 
 function progressRef(uid: string) {
   return adminDb.collection("progress").doc(uid);
@@ -25,7 +29,8 @@ function progressRef(uid: string) {
 
 async function readProgress(uid: string): Promise<Progress> {
   const snap = await progressRef(uid).get();
-  if (!snap.exists) return { results: {}, score: { correct: 0, wrong: 0 }, currentIdx: 0 };
+  if (!snap.exists)
+    return { results: {}, score: { correct: 0, wrong: 0 }, currentIdx: 0 };
   const data = snap.data() ?? {};
   return {
     results: (data.results as Record<string, Result>) ?? {},
@@ -86,7 +91,12 @@ export async function recordAnswer(
 
     tx.set(
       ref,
-      { results, score, currentIdx: idx, updatedAt: FieldValue.serverTimestamp() },
+      {
+        results,
+        score,
+        currentIdx: idx,
+        updatedAt: FieldValue.serverTimestamp(),
+      },
       { merge: true },
     );
   });

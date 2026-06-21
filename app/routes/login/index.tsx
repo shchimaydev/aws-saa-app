@@ -43,7 +43,11 @@ export default function Login() {
     } catch (err) {
       const code = (err as { code?: string })?.code ?? "";
       // User dismissing the Google popup isn't worth shouting about.
-      const cancelled = ["popup_closed", "user_cancel", "auth/popup-closed-by-user"].includes(code);
+      const cancelled = [
+        "popup_closed",
+        "user_cancel",
+        "auth/popup-closed-by-user",
+      ].includes(code);
       if (!cancelled) {
         setError("Sign-in failed. Please try again.");
       }
@@ -56,7 +60,9 @@ export default function Login() {
       <Modal>
         <Logo>AWS</Logo>
         <Title>SAA-C03 Quiz</Title>
-        <Lead>Sign in to save and sync your progress across all your devices.</Lead>
+        <Lead>
+          Sign in to save and sync your progress across all your devices.
+        </Lead>
         <LoginButton onClick={handleSignIn} disabled={busy} />
         <ErrorText>{error}</ErrorText>
       </Modal>

@@ -7,6 +7,7 @@ import {
 } from "react";
 
 import { Viewport, Spacer, Row } from "./index.styles";
+import { computeRenderRange, computeNeedRange } from "./window";
 
 export interface VirtualizedListProps<T> {
   /** Length of the full (virtual) list — sizes the scroll area / scrollbar. */
@@ -55,10 +56,10 @@ export default function VirtualizedList<T>({
   getKey,
   renderItem,
   renderPlaceholder,
-  overscan = 6,
   bufferRows,
   onNeedRange,
   scrollToIndex,
+  overscan = 6,
   scrollToOffset = 4,
   className,
 }: VirtualizedListProps<T>) {
@@ -68,7 +69,9 @@ export default function VirtualizedList<T>({
   // Seed scroll position from the focus target so the first paint (incl. SSR)
   // renders the right rows instead of flashing placeholders at the top.
   const [scrollTop, setScrollTop] = useState(() =>
-    scrollToIndex != null ? Math.max(0, (scrollToIndex - scrollToOffset) * itemHeight) : 0,
+    scrollToIndex != null
+      ? Math.max(0, (scrollToIndex - scrollToOffset) * itemHeight)
+      : 0,
   );
 
   const onNeedRangeRef = useRef(onNeedRange);
@@ -93,17 +96,26 @@ export default function VirtualizedList<T>({
     if (!el) return;
     const rowTop = scrollToIndex * itemHeight;
     const rowBottom = rowTop + itemHeight;
-    if (rowTop >= el.scrollTop && rowBottom <= el.scrollTop + el.clientHeight) return;
+    if (rowTop >= el.scrollTop && rowBottom <= el.scrollTop + el.clientHeight)
+      return;
     const max = el.scrollHeight - el.clientHeight;
-    const top = Math.max(0, Math.min((scrollToIndex - scrollToOffset) * itemHeight, max));
+    const top = Math.max(
+      0,
+      Math.min((scrollToIndex - scrollToOffset) * itemHeight, max),
+    );
     el.scrollTo({ top, behavior: "auto" });
     setScrollTop(top);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrollToIndex, itemHeight, scrollToOffset]);
 
-  const firstVisible = Math.floor(scrollTop / itemHeight);
-  const rowsInView = viewportHeight ? Math.ceil(viewportHeight / itemHeight) : overscan * 2;
-  const lastVisible = firstVisible + rowsInView;
+  const { firstVisible, lastVisible, renderFirst, renderLast } =
+    computeRenderRange({
+      scrollTop,
+      viewportHeight,
+      itemHeight,
+      totalCount,
+      overscan,
+    });
 
   const loadedStart = startIndex;
   const loadedEnd = startIndex + items.length;
@@ -113,16 +125,17 @@ export default function VirtualizedList<T>({
   // effect only re-runs when the scroll range or loaded slice changes, so a
   // fulfilled request (which moves loadedStart/End) naturally stops it.
   useEffect(() => {
-    if (!onNeedRangeRef.current || totalCount === 0) return;
-    const needStart = Math.max(0, firstVisible - buffer);
-    const needEnd = Math.min(totalCount, lastVisible + buffer);
-    if (needStart < loadedStart || needEnd > loadedEnd) {
-      onNeedRangeRef.current(needStart, needEnd);
-    }
+    if (!onNeedRangeRef.current) return;
+    const need = computeNeedRange({
+      firstVisible,
+      lastVisible,
+      buffer,
+      totalCount,
+      loadedStart,
+      loadedEnd,
+    });
+    if (need) onNeedRangeRef.current(need.start, need.end);
   }, [firstVisible, lastVisible, buffer, loadedStart, loadedEnd, totalCount]);
-
-  const renderFirst = Math.max(0, firstVisible - overscan);
-  const renderLast = Math.min(totalCount, lastVisible + overscan);
 
   const rows: ReactNode[] = [];
   for (let i = renderFirst; i < renderLast; i++) {
