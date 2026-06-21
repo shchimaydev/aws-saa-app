@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Form, Link } from "react-router";
 import styled, { css } from "styled-components";
 
 export const Header = styled.div`
@@ -46,22 +46,23 @@ export const OptionsGrid = styled.div`
 `;
 
 // Sticky action bar pinned to the bottom of the scrolling main column. The
-// negative margins cancel the Main route padding so the bar bleeds full-width
-// and sits flush against the viewport edge, matching the Figma design.
+// negative horizontal margins cancel Main's side padding so the bar bleeds
+// full-width; Main has no bottom padding, so `bottom: 0` sits flush against the
+// viewport edge, matching the Figma design.
 export const ActionRow = styled.div`
   position: sticky;
   bottom: 0;
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 24px -16px -16px;
+  margin: 24px -16px 0;
   padding: 12px 16px;
   background: rgba(14, 17, 23, 0.95);
   backdrop-filter: blur(8px);
   border-top: 1px solid ${({ theme }) => theme.hairline};
 
   @media (min-width: 768px) {
-    margin: 28px -32px -28px;
+    margin: 28px -32px 0;
     padding: 14px 30px;
   }
 `;

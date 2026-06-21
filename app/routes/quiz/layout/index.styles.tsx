@@ -26,7 +26,11 @@ export const LayoutGrid = styled.div`
 
 export const Main = styled.div`
   overflow-y: auto;
-  padding: 16px;
+  /* No bottom padding: a scroll container's padding-bottom shrinks the sticky
+     containment rect, which would park QuestionCard's sticky ActionRow above
+     the real bottom. Routes own their own bottom spacing instead. */
+  padding: 16px 16px 0;
+  position: relative;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -37,7 +41,7 @@ export const Main = styled.div`
   }
 
   @media (min-width: 768px) {
-    padding: 28px 32px;
+    padding: 28px 32px 0;
   }
 `;
 
