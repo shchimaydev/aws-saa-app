@@ -49,7 +49,8 @@ export default function Login() {
         "auth/popup-closed-by-user",
       ].includes(code);
       if (!cancelled) {
-        setError("Sign-in failed. Please try again.");
+        //setError("Sign-in failed. Please try again.");
+        setError((err as { message?: string })?.message ?? "");
       }
       setPopupBusy(false);
     }
