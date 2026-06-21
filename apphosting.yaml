@@ -29,6 +29,9 @@ env:
   - variable: PUBLIC_FIREBASE_APP_ID
     value: "1:153177311685:web:23202ebf86e25474b2a3ac"
     availability: [BUILD, RUNTIME]
+  - variable: PUBLIC_GOOGLE_OAUTH_CLIENT_ID
+    value: "153177311685-mattu52j1duc2h62t0jrgvgcf7av685r.apps.googleusercontent.com"
+    availability: [BUILD, RUNTIME]
 
   # Server-only secret for signing the session cookie. Stored in Secret Manager.
   # Create + grant once before first deploy:
