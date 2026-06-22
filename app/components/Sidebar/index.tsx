@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useFetcher, useParams, useSearchParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import {
   CheckCircle2,
   ChevronRight,
@@ -92,12 +92,21 @@ export default function Sidebar({
   wrong,
   open,
   onClose,
+  windowData,
+  windowLoading,
+  onRequestWindow,
 }: {
   sidebar: SidebarData;
   correct: number;
   wrong: number;
   open: boolean;
   onClose: () => void;
+  /** The most recent window returned by a boundary fetch, if any. */
+  windowData?: SidebarData;
+  /** True while a boundary window fetch is in flight. */
+  windowLoading: boolean;
+  /** Ask for a fresh window centered on `anchor` (a 1-based question num). */
+  onRequestWindow: (anchor: number) => void;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const params = useParams();
@@ -116,8 +125,6 @@ export default function Sidebar({
   // The client holds exactly one window. It is *replaced* — never accumulated.
   const [view, setView] = useState<WindowView>(() => toView(sidebar));
 
-  const fetcher = useFetcher<SidebarData>();
-
   // Replace the window whenever the loader re-runs (navigation / filter change).
   useEffect(() => {
     setView(toView(sidebar));
@@ -125,10 +132,10 @@ export default function Sidebar({
 
   // Replace the window with whatever a boundary fetch returned.
   useEffect(() => {
-    if (fetcher.data?.windowed && fetcher.data.items.length) {
-      setView(toView(fetcher.data));
+    if (windowData?.windowed && windowData.items.length) {
+      setView(toView(windowData));
     }
-  }, [fetcher.data]);
+  }, [windowData]);
 
   // Debounce writing the search term to the URL (drives server-side filtering).
   useEffect(() => {
@@ -161,9 +168,9 @@ export default function Sidebar({
   // The list needs a window covering [start, end). Re-center a fresh window on
   // that range and swap it in — never request data we already hold.
   function handleNeedRange(start: number, end: number) {
-    if (filtering || fetcher.state !== "idle") return;
+    if (filtering || windowLoading) return;
     const anchor = Math.floor((start + end) / 2) + 1; // 0-based range → 1-based num
-    fetcher.load(`/quiz/api/sidebar?anchor=${anchor}`);
+    onRequestWindow(anchor);
   }
 
   const renderItem = useMemo(

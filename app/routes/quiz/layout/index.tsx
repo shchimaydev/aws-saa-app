@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router";
+import { Outlet, useFetcher, useLocation } from "react-router";
 
 import type { Route } from "./+types/index";
+import type { SidebarData } from "~/components/Sidebar";
 import { requireSessionUser } from "~/lib/session.server";
 import { getProgress } from "~/lib/progress.server";
 import { TOTAL_QUESTIONS } from "~/lib/questions.server";
@@ -41,6 +42,11 @@ export default function QuizLayout({ loaderData }: Route.ComponentProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
 
+  // The sidebar's infinite-scroll windows are fetched here so the component
+  // stays presentational — it asks for a window by anchor and renders what
+  // comes back, without knowing the resource route that serves it.
+  const sidebarFetcher = useFetcher<SidebarData>();
+
   // The layout route persists across child navigations, so closing on a
   // pathname change reliably dismisses the drawer after picking a question.
   useEffect(() => {
@@ -73,6 +79,11 @@ export default function QuizLayout({ loaderData }: Route.ComponentProps) {
           wrong={score.wrong}
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
+          windowData={sidebarFetcher.data}
+          windowLoading={sidebarFetcher.state !== "idle"}
+          onRequestWindow={(anchor) =>
+            sidebarFetcher.load(`/quiz/api/sidebar?anchor=${anchor}`)
+          }
         />
         <Backdrop $open={drawerOpen} onClick={() => setDrawerOpen(false)} />
         <Main>
