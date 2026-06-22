@@ -4,7 +4,10 @@ import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 
 import OptionButton from "~/components/OptionButton";
 import type { OptionVariant } from "~/components/OptionButton/index.styles";
-import { nextHref, prevHref } from "~/lib/quizNav";
+import {
+  nextHref as quizNextHref,
+  prevHref as quizPrevHref,
+} from "~/lib/quiz/quiz-nav";
 import {
   Header,
   Badge,
@@ -40,6 +43,13 @@ interface QuestionCardProps {
   /** The user's submitted selection (for marking wrong picks). Empty on reload. */
   selectedAfter: number[];
   submitting: boolean;
+  /**
+   * Override the prev/next targets. Defaults to the linear quiz nav (by `num`);
+   * the test route passes test-scoped hrefs that walk its own question order.
+   * `prevHref === null` disables the Prev control.
+   */
+  prevHref?: string | null;
+  nextHref?: string;
 }
 
 export default function QuestionCard({
@@ -54,6 +64,8 @@ export default function QuestionCard({
   optionExplanations,
   selectedAfter,
   submitting,
+  prevHref,
+  nextHref,
 }: QuestionCardProps) {
   const [searchParams] = useSearchParams();
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -89,8 +101,9 @@ export default function QuestionCard({
   }
 
   const qs = searchParams.toString();
-  const prev = prevHref(num, qs);
-  const next = nextHref(num, total, qs);
+  // Use the test-scoped overrides when provided, else the linear quiz nav.
+  const prev = prevHref !== undefined ? prevHref : quizPrevHref(num, qs);
+  const next = nextHref !== undefined ? nextHref : quizNextHref(num, total, qs);
 
   return (
     <div>

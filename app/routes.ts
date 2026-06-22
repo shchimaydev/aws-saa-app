@@ -11,4 +11,13 @@ export default [
   ]),
   // Resource route for the sidebar's infinite scroll (no layout chrome).
   route("quiz/api/sidebar", "routes/quiz/api.sidebar/index.tsx"),
+
+  // Generated mock-exam ("Generate Test") flow, mirroring the quiz block.
+  route("test/generate", "routes/test/generate/index.tsx"), // action-only
+  route("test", "routes/test/index/index.tsx"), // redirect → latest test
+  route("test/:testId", "routes/test/layout/index.tsx", [
+    route(":num", "routes/test/test.$num/index.tsx"),
+    route("complete", "routes/test/test.complete/index.tsx"),
+  ]),
+  route("test/:testId/api/sidebar", "routes/test/api.sidebar/index.tsx"),
 ] satisfies RouteConfig;

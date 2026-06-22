@@ -7,7 +7,7 @@
 //   updatedAt:  serverTimestamp
 
 import { FieldValue } from "firebase-admin/firestore";
-import { adminDb } from "./firebase.server";
+import { adminDb } from "../firebase/firebase.server";
 
 export type Result = "correct" | "wrong";
 

@@ -5,9 +5,9 @@
 //   GET /quiz/api/sidebar?anchor=<num>&filter=<all|...>&q=<text>  -> SidebarData
 
 import type { Route } from "./+types/index";
-import { requireSessionUser } from "~/lib/session.server";
-import { getProgress } from "~/lib/progress.server";
-import { buildSidebarData } from "~/lib/sidebar.server";
+import { requireSessionUser } from "~/lib/auth/session.server";
+import { getProgress } from "~/lib/progress/progress.server";
+import { buildSidebarData } from "~/lib/quiz/sidebar.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const user = await requireSessionUser(request);

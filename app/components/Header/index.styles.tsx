@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import styled from "styled-components";
 
 export const Bar = styled.header`
@@ -71,6 +72,96 @@ export const ExamBadge = styled.span`
   /* Declutter the mobile header — the exam name is implied by the app. */
   @media (max-width: 640px) {
     display: none;
+  }
+`;
+
+// Returns to the full question bank (the quiz). Ghost styling keeps it quiet
+// next to the brand; the label collapses to the icon on small screens.
+export const HomeLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.text2};
+  text-decoration: none;
+  flex-shrink: 0;
+
+  &:hover {
+    color: ${({ theme }) => theme.text};
+    background: ${({ theme }) => theme.hairline};
+  }
+
+  @media (max-width: 640px) {
+    padding: 6px;
+    span {
+      display: none;
+    }
+  }
+`;
+
+// Groups the test actions (generate + open-latest) so they sit together.
+export const TestActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+`;
+
+// Opens the most recently generated test. Square icon-only sibling to the
+// Generate button, sharing its outlined-accent look.
+export const LatestTestLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: ${({ theme }) => theme.surface};
+  color: ${({ theme }) => theme.accent};
+  border: 1px solid ${({ theme }) => theme.accent};
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(255, 153, 0, 0.1);
+  }
+`;
+
+// Assembles a fresh mock exam. Outlined accent pill so it reads as an action
+// without competing with the brand. The label collapses to the icon on phones.
+export const GenerateButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: ${({ theme }) => theme.surface};
+  color: ${({ theme }) => theme.accent};
+  border: 1px solid ${({ theme }) => theme.accent};
+  border-radius: 6px;
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 153, 0, 0.1);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  /* On a phone the icon alone carries the action; drop the label. */
+  @media (max-width: 520px) {
+    padding: 6px;
+    span {
+      display: none;
+    }
   }
 `;
 

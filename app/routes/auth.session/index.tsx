@@ -1,7 +1,7 @@
 import { redirect } from "react-router";
 
 import type { Route } from "./+types/index";
-import { createUserSession } from "~/lib/session.server";
+import { createUserSession } from "~/lib/auth/session.server";
 
 // No UI — this route only exchanges an ID token for a session cookie.
 // A direct GET has nothing to show, so bounce to /login.

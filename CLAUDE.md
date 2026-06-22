@@ -20,13 +20,13 @@ This is a rewrite of a legacy single-file `index.html` app. Data shapes (the Fir
 
 ### Commands
 
-| Task       | Command            |
-| ---------- | ------------------ |
-| Dev server | `npm run dev`      |
-| Build      | `npm run build`    |
+| Task       | Command                                                      |
+| ---------- | ------------------------------------------------------------ |
+| Dev server | `npm run dev`                                                |
+| Build      | `npm run build`                                              |
 | Typecheck  | `npm run typecheck` (runs `react-router typegen` then `tsc`) |
-| Tests      | `npm test` (`vitest run`) |
-| Start prod | `npm run start`    |
+| Tests      | `npm test` (`vitest run`)                                    |
+| Start prod | `npm run start`                                              |
 
 Run `npm run typecheck` after non-trivial changes — it regenerates route types and is the fastest way to catch breakage.
 
@@ -36,8 +36,10 @@ Run `npm run typecheck` after non-trivial changes — it regenerates route types
 app/
   components/      reusable UI (one folder per component — see pattern below)
   routes/          route modules (mapped explicitly in app/routes.ts)
-  lib/             server + client helpers. *.server.ts = server-only, *.client.ts = client-only
-  data/            questions.json (~1.1 MB static bank, server-only via questions.server.ts)
+  lib/             server + client helpers, grouped by domain into sub-folders
+                   (firebase/ auth/ questions/ progress/ quiz/ generated-test/).
+                   *.server.ts = server-only, *.client.ts = client-only
+  data/            questions.json (~1.1 MB static bank, server-only via questions/questions.server.ts)
   styles/          theme.ts, GlobalStyle.ts, styled.d.ts (ThemeProvider type augmentation)
   types/           shared TS types (e.g. questions.ts — canonical Question/SidebarEntry)
   root.tsx         HTML document, ThemeProvider, GlobalStyle, ErrorBoundary
@@ -60,7 +62,7 @@ app/components/OptionButton/
 
 - **`index.tsx`** — the component. Props as a named `interface`, `export default function`. Markup is composed from styled elements imported from `./index.styles`.
 - **`index.styles.tsx`** — all `styled` definitions, exported individually (`export const Wrap = styled.div\`...\``). Style-specific unions/types live here too and are re-exported (e.g. `OptionVariant`).
-- **Transient props** use the `$`-prefix convention (`$variant`, `$hasExp`) so they're not forwarded to the DOM. Variant-driven styling uses `css\`\`` blocks gated on the `$variant` prop.
+- **Transient props** use the `$`-prefix convention (`$variant`, `$hasExp`) so they're not forwarded to the DOM. Variant-driven styling uses `css\`\``blocks gated on the`$variant` prop.
 - **Theme access** is always via `({ theme }) => theme.someToken`. Never hardcode colors — add/use tokens in `app/styles/theme.ts`. (Some translucent overlay rgba values are inlined where they're one-off; prefer tokens.)
 
 Tests are co-located (`*.test.ts`) and pure where possible — heavy logic (e.g. virtualized-list windowing in `VirtualizedList/window.ts`) is extracted into a plain module so it can be unit-tested without rendering. Mirror that: pull tricky logic out of components into testable functions.
@@ -81,12 +83,14 @@ Tests are co-located (`*.test.ts`) and pure where possible — heavy logic (e.g.
 ### Server / data layer
 
 - **`*.server.ts`** modules are server-only — the suffix guarantees they (and large imports like `questions.json`) never reach the client bundle. **`*.client.ts`** is the inverse.
-- **Auth** (`lib/session.server.ts`): `getUserId` / `requireUserId` / `getSessionUser` / `requireSessionUser`. Page reads verify the cookie locally (no network). Pass `checkRevoked = true` on **sensitive mutations** to round-trip the Auth backend (see the quiz `action`).
-- **Progress** (`lib/progress.server.ts`): all writes go through `recordAnswer` in a Firestore **transaction**; scoring is idempotent (a question is scored once). Reads are **deduped per `Request`** via a `WeakMap` so the layout loader and the page loader share one Firestore fetch — pass `request` to `getProgress` during navigations.
-- **Questions** (`lib/questions.server.ts`): static bank, 1-based `num`. Correct answers + explanations are **withheld from the loader payload until a question is answered** — don't leak them client-side. The searchable `textLower` index is server-only.
+- **Auth** (`lib/auth/session.server.ts`): `getUserId` / `requireUserId` / `getSessionUser` / `requireSessionUser`. Page reads verify the cookie locally (no network). Pass `checkRevoked = true` on **sensitive mutations** to round-trip the Auth backend (see the quiz `action`).
+- **Progress** (`lib/progress/progress.server.ts`): all writes go through `recordAnswer` in a Firestore **transaction**; scoring is idempotent (a question is scored once). Reads are **deduped per `Request`** via a `WeakMap` so the layout loader and the page loader share one Firestore fetch — pass `request` to `getProgress` during navigations.
+- **Questions** (`lib/questions/questions.server.ts`): static bank, 1-based `num`. Correct answers + explanations are **withheld from the loader payload until a question is answered** — don't leak them client-side. The searchable `textLower` index is server-only.
+- **Generated tests** (`lib/generated-test/`): `test.server.ts` persists per-user mock exams at `/users/{uid}/tests/{testId}` (same transaction + per-`Request` `WeakMap` patterns as progress; `recordTestAnswer` also mirrors into global progress). `test-gen.ts` is the pure, unit-tested sampling logic; `test-nav.ts` / `test-sidebar.server.ts` are the test-scoped nav + sidebar builders.
 
 ### Conventions
 
+- **Naming:** only **component** files/folders are `CamelCase` — i.e. `app/components/SomeComponent/` and its `index.*`. **Everything else is `kebab-case`**: lib folders (`generated-test/`), lib modules (`test-gen.ts`, `test-nav.ts`), and helpers. Meaningful suffixes are preserved on the kebab name (`*.server.ts`, `*.client.ts`, `*.test.ts`).
 - Path alias **`~/*` → `app/*`**.
 - Prettier is the formatter (`prettier` devDep) — match existing formatting.
 - Comments explain **why**, not what — the existing code is well-commented at decision points (e.g. why a window is sized a certain way, why a read is deduped). Keep that bar; don't add noise.

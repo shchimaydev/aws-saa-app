@@ -3,17 +3,22 @@
 // scroll). Pagination only applies to plain browsing — when a search query or a
 // status filter is active we return the full matching set (search-all).
 
-import type { Result } from "./progress.server";
+import type { Result } from "../progress/progress.server";
 import {
   getAllSidebarSource,
   getSidebarSource,
   TOTAL_QUESTIONS,
-} from "./questions.server";
+} from "../questions/questions.server";
 
 export interface SidebarItem {
   num: number;
   preview: string;
   result: Result | null;
+  /**
+   * Number shown in the row label, when it should differ from `num`. Tests show
+   * a 1-based position within the exam (1–65); the quiz omits it and shows `num`.
+   */
+  displayNum?: number;
 }
 
 export interface SidebarData {

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Form } from "react-router";
-import { Layers, Menu, X } from "lucide-react";
+import { Form, useNavigation } from "react-router";
+import { History, House, ListChecks, Layers, Menu, X } from "lucide-react";
 
-import { signOutClient } from "~/lib/firebase.client";
+import { signOutClient } from "~/lib/firebase/firebase.client";
 import {
   Bar,
   MenuButton,
@@ -10,6 +10,10 @@ import {
   Logo,
   Wordmark,
   ExamBadge,
+  HomeLink,
+  TestActions,
+  LatestTestLink,
+  GenerateButton,
   ScoreBar,
   Answered,
   UserMenu,
@@ -44,6 +48,11 @@ export default function Header({
   const answered = correct + wrong;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Scope the pending label to *this* form so unrelated navigations don't
+  // flip the button to "Generating…".
+  const navigation = useNavigation();
+  const generating = navigation.formAction === "/test/generate";
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -82,6 +91,27 @@ export default function Header({
         <Wordmark>AWS Prep</Wordmark>
         <ExamBadge>SAA-C03</ExamBadge>
       </Brand>
+
+      <HomeLink to="/" prefetch="intent">
+        <House size={14} />
+        <span>Home</span>
+      </HomeLink>
+
+      <TestActions>
+        <Form method="post" action="/test/generate">
+          <GenerateButton type="submit" disabled={generating}>
+            <ListChecks size={14} />
+            <span>{generating ? "Generating…" : "Generate Test"}</span>
+          </GenerateButton>
+        </Form>
+        <LatestTestLink
+          to="/test"
+          aria-label="Open latest test"
+          title="Open latest test"
+        >
+          <History size={15} />
+        </LatestTestLink>
+      </TestActions>
 
       <ScoreBar>
         <Answered>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "react-router";
+import { useFetcher, useParams, useSearchParams } from "react-router";
 import {
   CheckCircle2,
   ChevronRight,
@@ -37,6 +37,8 @@ export interface SidebarItem {
   num: number;
   preview: string;
   result: "correct" | "wrong" | null;
+  /** Label number when it differs from `num` (e.g. a test's 1–65 position). */
+  displayNum?: number;
 }
 
 export interface SidebarData {
@@ -54,6 +56,9 @@ interface WindowView {
   startIndex: number;
   totalCount: number;
 }
+
+/** Stable default so the renderItem memo isn't busted when no `hrefFor` given. */
+const defaultHrefFor = (num: number) => `/quiz/${num}`;
 
 const FILTERS: ReadonlyArray<readonly [string, string]> = [
   ["all", "All"],
@@ -92,26 +97,29 @@ export default function Sidebar({
   wrong,
   open,
   onClose,
-  windowData,
-  windowLoading,
-  onRequestWindow,
+  apiPath = "/quiz/api/sidebar",
+  hrefFor = defaultHrefFor,
 }: {
   sidebar: SidebarData;
   correct: number;
   wrong: number;
   open: boolean;
   onClose: () => void;
-  /** The most recent window returned by a boundary fetch, if any. */
-  windowData?: SidebarData;
-  /** True while a boundary window fetch is in flight. */
-  windowLoading: boolean;
-  /** Ask for a fresh window centered on `anchor` (a 1-based question num). */
-  onRequestWindow: (anchor: number) => void;
+  /** Resource route serving infinite-scroll windows (browse mode only). */
+  apiPath?: string;
+  /** Builds the link target for a question num (without query string). */
+  hrefFor?: (num: number) => string;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const params = useParams();
   const activeNum = params.num ? Number(params.num) : null;
   const filter = searchParams.get("filter") ?? "all";
+
+  // Boundary windows are fetched here so the parent layout stays out of the
+  // infinite-scroll plumbing; `apiPath` is the only thing that varies per host.
+  const fetcher = useFetcher<SidebarData>();
+  const windowData = fetcher.data;
+  const windowLoading = fetcher.state !== "idle";
 
   const total = sidebar.total;
   const answered = correct + wrong;
@@ -165,20 +173,33 @@ export default function Sidebar({
 
   const qs = searchParams.toString();
 
+  // The active row's *absolute* index in the virtual canvas. Browsing the full
+  // bank, that's num-1 (kept stable across window swaps so scrolling doesn't
+  // jerk back to it). A self-contained list (test or filter result) indexes by
+  // the row's position within `items` — so a 65-row test never scrolls to a
+  // global num like 350.
+  const activeIndex = useMemo(() => {
+    if (activeNum == null) return null;
+    if (sidebar.windowed) return activeNum - 1;
+    const local = view.items.findIndex((it) => it.num === activeNum);
+    return local >= 0 ? local : null;
+  }, [activeNum, sidebar.windowed, view.items]);
+
   // The list needs a window covering [start, end). Re-center a fresh window on
   // that range and swap it in — never request data we already hold.
   function handleNeedRange(start: number, end: number) {
     if (filtering || windowLoading) return;
     const anchor = Math.floor((start + end) / 2) + 1; // 0-based range → 1-based num
-    onRequestWindow(anchor);
+    fetcher.load(`${apiPath}?anchor=${anchor}`);
   }
 
   const renderItem = useMemo(
     () => (item: SidebarItem) => {
       const isActive = item.num === activeNum;
+      const base = hrefFor(item.num);
       return (
         <Item
-          to={qs ? `/quiz/${item.num}?${qs}` : `/quiz/${item.num}`}
+          to={qs ? `${base}?${qs}` : base}
           prefetch="intent"
           $active={isActive}
         >
@@ -186,7 +207,9 @@ export default function Sidebar({
             <StatusIcon result={item.result} />
           </span>
           <span className="mid">
-            <span className="q-num">Q{String(item.num).padStart(2, "0")}</span>
+            <span className="q-num">
+              Q{String(item.displayNum ?? item.num).padStart(2, "0")}
+            </span>
             <span className="q-preview">{item.preview}...</span>
           </span>
           {isActive ? (
@@ -197,7 +220,7 @@ export default function Sidebar({
         </Item>
       );
     },
-    [activeNum, qs],
+    [activeNum, qs, hrefFor],
   );
 
   // Absolute index → its 1-based question number while its data is in flight.
@@ -277,7 +300,7 @@ export default function Sidebar({
             getKey={(it) => it.num}
             renderItem={renderItem}
             renderPlaceholder={filtering ? undefined : renderPlaceholder}
-            scrollToIndex={activeNum != null ? activeNum - 1 : null}
+            scrollToIndex={activeIndex}
             onNeedRange={filtering ? undefined : handleNeedRange}
           />
         )}

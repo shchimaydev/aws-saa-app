@@ -2,10 +2,11 @@
 // The `.server.ts` suffix guarantees this (and the ~1.1 MB JSON it imports) is
 // never bundled into the client.
 
-import questionsData from "../data/questions.json";
-import type { Question, SidebarEntry } from "../types/questions";
+import questionsData from "../../data/questions.json";
+import type { Question, SidebarEntry } from "../../types/questions";
+import { ALL_DOMAINS, type Domain } from "../../types/domain";
 
-// Re-export the shared types so existing `from "~/lib/questions.server"` imports
+// Re-export the shared types so existing `from "~/lib/questions/questions.server"` imports
 // keep working; the canonical definitions live in app/types/questions.ts.
 export type { Question, SidebarEntry };
 
@@ -99,4 +100,26 @@ export function getSidebarSource(quizNumber?: number): SidebarWindow {
 /** The complete sidebar index — used for server-side search/filter (no window). */
 export function getAllSidebarSource(): SidebarSource[] {
   return ALL_SOURCES;
+}
+
+// Built once at module load (like ALL_SOURCES): for each domain, every `num`
+// whose `domains` set includes it. A multi-domain question appears in each of
+// its domains' arrays, so the arrays overlap and their lengths sum to > 684.
+const NUMS_BY_DOMAIN: Record<Domain, number[]> = (() => {
+  const map = Object.fromEntries(
+    ALL_DOMAINS.map((d) => [d, [] as number[]]),
+  ) as Record<Domain, number[]>;
+  for (const q of QUESTIONS) {
+    for (const d of q.domains) map[d].push(q.num);
+  }
+  return map;
+})();
+
+/**
+ * 1-based question `num`s grouped by domain membership. Each question is listed
+ * under every domain it covers, so test generation (which picks distinct
+ * questions across domains) can pool candidates per domain.
+ */
+export function getQuestionNumsByDomain(): Record<Domain, number[]> {
+  return NUMS_BY_DOMAIN;
 }

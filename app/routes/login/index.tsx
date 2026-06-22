@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { redirect, useFetcher } from "react-router";
 
 import type { Route } from "./+types/index";
-import { getUserId } from "~/lib/session.server";
-import { signInWithGoogle } from "~/lib/firebase.client";
+import { getUserId } from "~/lib/auth/session.server";
+import { signInWithGoogle } from "~/lib/firebase/firebase.client";
 import LoginButton from "~/components/LoginButton";
 import { Overlay, Modal, Logo, Title, Lead, ErrorText } from "./index.styles";
 

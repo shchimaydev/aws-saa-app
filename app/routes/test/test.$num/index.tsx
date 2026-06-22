@@ -1,9 +1,10 @@
-import { useNavigation } from "react-router";
+import { useNavigation, useSearchParams } from "react-router";
 
 import type { Route } from "./+types/index";
 import { requireUserId } from "~/lib/auth/session.server";
-import { getQuestion, TOTAL_QUESTIONS } from "~/lib/questions/questions.server";
-import { getProgress, recordAnswer } from "~/lib/progress/progress.server";
+import { getQuestion } from "~/lib/questions/questions.server";
+import { getTest, recordTestAnswer } from "~/lib/generated-test/test.server";
+import { testNextHref, testPrevHref } from "~/lib/generated-test/test-nav";
 import QuestionCard from "~/components/QuestionCard";
 
 // Options are stored as "A. ...". Strip the leading "A. " for display.
@@ -15,17 +16,27 @@ function parseOption(opt: string, i: number) {
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const uid = await requireUserId(request);
+  const { testId } = params;
   const num = Number(params.num);
+
+  const test = await getTest(uid, testId, request);
+  if (!test) throw new Response("Not Found", { status: 404 });
+  const index = test.questions.indexOf(num);
+  if (index < 0) throw new Response("Not Found", { status: 404 });
+
   const question = getQuestion(num);
   if (!question) throw new Response("Not Found", { status: 404 });
 
-  const progress = await getProgress(uid, request);
-  const storedResult = progress.results[String(num - 1)] ?? null;
+  const storedResult = test.results[String(num)] ?? null;
   const answered = storedResult !== null;
 
   const base = {
     num,
-    total: TOTAL_QUESTIONS,
+    testId,
+    questions: test.questions,
+    // Position within the test (1-based) and its length, for the Q badge.
+    position: index + 1,
+    length: test.questions.length,
     text: question.text,
     multi: question.multi || question.correct.length > 1,
     options: question.options.map(parseOption),
@@ -47,7 +58,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 export async function action({ request, params }: Route.ActionArgs) {
   // Sensitive write — verify revocation against the Auth backend.
   const uid = await requireUserId(request, "/login", true);
+  const { testId } = params;
   const num = Number(params.num);
+
+  const test = await getTest(uid, testId);
+  if (!test) throw new Response("Not Found", { status: 404 });
+  if (!test.questions.includes(num))
+    throw new Response("Not Found", { status: 404 });
+
   const question = getQuestion(num);
   if (!question) throw new Response("Not Found", { status: 404 });
 
@@ -67,7 +85,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     selected.every((v, i) => v === correctSorted[i]);
   const result = isCorrect ? "correct" : "wrong";
 
-  await recordAnswer(uid, num - 1, result);
+  await recordTestAnswer(uid, testId, num, result);
 
   return {
     selected,
@@ -77,14 +95,16 @@ export async function action({ request, params }: Route.ActionArgs) {
   };
 }
 
-export default function QuizQuestion({
+export default function TestQuestion({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
   const navigation = useNavigation();
   const submitting = navigation.state !== "idle";
+  const [searchParams] = useSearchParams();
+  const qs = searchParams.toString();
 
-  // Revealed once answered (from progress) or immediately after submitting.
+  // Revealed once answered (from the test) or immediately after submitting.
   const revealed = loaderData.answered || Boolean(actionData);
   const result = (actionData?.result ?? loaderData.result) as
     | "correct"
@@ -95,11 +115,13 @@ export default function QuizQuestion({
     actionData?.optionExplanations ?? loaderData.optionExplanations;
   const selectedAfter = actionData?.selected ?? [];
 
+  const { testId, num, questions, position, length } = loaderData;
+
   return (
     <QuestionCard
-      key={loaderData.num}
-      num={loaderData.num}
-      total={loaderData.total}
+      key={num}
+      num={position}
+      total={length}
       text={loaderData.text}
       multi={loaderData.multi}
       options={loaderData.options}
@@ -109,6 +131,8 @@ export default function QuizQuestion({
       optionExplanations={optionExplanations}
       selectedAfter={selectedAfter}
       submitting={submitting}
+      prevHref={testPrevHref(testId, num, questions, qs)}
+      nextHref={testNextHref(testId, num, questions, qs)}
     />
   );
 }

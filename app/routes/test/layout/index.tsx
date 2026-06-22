@@ -1,53 +1,62 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router";
 
 import type { Route } from "./+types/index";
 import { requireSessionUser } from "~/lib/auth/session.server";
-import { getProgress } from "~/lib/progress/progress.server";
-import { TOTAL_QUESTIONS } from "~/lib/questions/questions.server";
-import { buildSidebarData } from "~/lib/quiz/sidebar.server";
+import { getTest } from "~/lib/generated-test/test.server";
+import { buildTestSidebarData } from "~/lib/generated-test/test-sidebar.server";
 import Header from "~/components/Header";
 import Sidebar from "~/components/Sidebar";
-import { Shell, LayoutGrid, Main, Backdrop } from "./index.styles";
+// Reuse the quiz layout's styled shell — identical chrome, no need to fork it.
+import {
+  Shell,
+  LayoutGrid,
+  Main,
+  Backdrop,
+} from "~/routes/quiz/layout/index.styles";
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await requireSessionUser(request);
-  const progress = await getProgress(user.uid, request);
+  const testId = params.testId;
+  const test = await getTest(user.uid, testId, request);
+  if (!test) throw new Response("Not Found", { status: 404 });
 
   const url = new URL(request.url);
   const filter = url.searchParams.get("filter") ?? "all";
   const q = url.searchParams.get("q") ?? "";
-  // Anchor pagination on the selected question (/quiz/:num); none → window from 1.
-  const match = url.pathname.match(/\/quiz\/(\d+)/);
-  const anchor = match ? Number(match[1]) : undefined;
 
-  const sidebar = buildSidebarData({
-    results: progress.results,
-    anchor,
+  const sidebar = buildTestSidebarData({
+    questions: test.questions,
+    results: test.results,
     filter,
     q,
   });
 
   return {
     user: { name: user.name, photoURL: user.picture },
-    score: progress.score,
-    total: TOTAL_QUESTIONS,
+    score: test.score,
+    total: test.questions.length,
     sidebar,
+    testId,
   };
 }
 
-export default function QuizLayout({ loaderData }: Route.ComponentProps) {
-  const { user, score, total, sidebar } = loaderData;
+export default function TestLayout({ loaderData }: Route.ComponentProps) {
+  const { user, score, total, sidebar, testId } = loaderData;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
 
-  // The layout route persists across child navigations, so closing on a
-  // pathname change reliably dismisses the drawer after picking a question.
+  // Stable per-test link builder so the sidebar's renderItem memo holds.
+  const hrefFor = useMemo(
+    () => (num: number) => `/test/${testId}/${num}`,
+    [testId],
+  );
+
+  // The layout persists across child navigations; close the drawer on each.
   useEffect(() => {
     setDrawerOpen(false);
   }, [location.pathname]);
 
-  // Escape closes the drawer while it's open.
   useEffect(() => {
     if (!drawerOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -73,6 +82,8 @@ export default function QuizLayout({ loaderData }: Route.ComponentProps) {
           wrong={score.wrong}
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
+          apiPath={`/test/${testId}/api/sidebar`}
+          hrefFor={hrefFor}
         />
         <Backdrop $open={drawerOpen} onClick={() => setDrawerOpen(false)} />
         <Main>

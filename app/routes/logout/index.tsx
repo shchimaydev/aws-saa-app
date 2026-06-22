@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 
-import { destroySession } from "~/lib/session.server";
+import { destroySession } from "~/lib/auth/session.server";
 
 // GET /logout has no UI.
 export async function loader() {

@@ -4,7 +4,7 @@
 // and verify it via the Admin SDK.
 
 import { createCookie, redirect } from "react-router";
-import { adminAuth } from "./firebase.server";
+import { adminAuth } from "../firebase/firebase.server";
 
 // Firebase session cookies allow up to 14 days.
 const EXPIRES_IN_MS = 60 * 60 * 24 * 14 * 1000;

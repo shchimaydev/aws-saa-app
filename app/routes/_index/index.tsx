@@ -1,8 +1,8 @@
 import { redirect } from "react-router";
 
 import type { Route } from "./+types/index";
-import { getUserId } from "~/lib/session.server";
-import { getProgress } from "~/lib/progress.server";
+import { getUserId } from "~/lib/auth/session.server";
+import { getProgress } from "~/lib/progress/progress.server";
 
 // Resume where the user left off, or send them to sign in.
 export async function loader({ request }: Route.LoaderArgs) {

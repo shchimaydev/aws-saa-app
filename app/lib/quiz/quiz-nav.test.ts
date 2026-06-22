@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { nextHref, prevHref } from "./quizNav";
+import { nextHref, prevHref } from "./quiz-nav";
 
 describe("prevHref", () => {
   it("is null at the first question (control disabled)", () => {
