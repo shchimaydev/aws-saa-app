@@ -73,6 +73,7 @@ export default function TestLayout({ loaderData }: Route.ComponentProps) {
         wrong={score.wrong}
         total={total}
         user={user}
+        hasTest
         onMenuClick={() => setDrawerOpen(true)}
       />
       <LayoutGrid>

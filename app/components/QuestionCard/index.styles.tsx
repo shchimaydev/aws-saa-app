@@ -102,6 +102,29 @@ export const PrevDisabled = styled.span`
   cursor: default;
 `;
 
+// Left-side secondary action: spin up a fresh mock exam without leaving the
+// question. Shares the quiet nav look so it doesn't compete with Submit/Next.
+export const GenerateTestButton = styled.button`
+  ${navBase}
+  cursor: pointer;
+  transition: border-color 0.15s;
+
+  &:hover:not(:disabled) {
+    border-color: ${({ theme }) => theme.accent2};
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  /* On a phone the icon carries the action; drop the longer label. */
+  @media (max-width: 520px) {
+    span {
+      display: none;
+    }
+  }
+`;
+
 // Primary control — Submit (unanswered) and Next (answered) share this look.
 const primaryBase = css`
   display: inline-flex;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Form, useSearchParams } from "react-router";
-import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Form, useNavigation, useSearchParams } from "react-router";
+import { Check, ChevronLeft, ChevronRight, ListChecks, X } from "lucide-react";
 
 import OptionButton from "~/components/OptionButton";
 import type { OptionVariant } from "~/components/OptionButton/index.styles";
@@ -19,6 +19,7 @@ import {
   Spacer,
   PrevLink,
   PrevDisabled,
+  GenerateTestButton,
   SubmitButton,
   NextLink,
   ResultBadge,
@@ -69,6 +70,10 @@ export default function QuestionCard({
   nextHref,
 }: QuestionCardProps) {
   const [searchParams] = useSearchParams();
+  const navigation = useNavigation();
+  // Scope the pending label to the generate action so an answer submit (or any
+  // other navigation) doesn't flip this button to "Generating…".
+  const generatingTest = navigation.formAction === "/test/generate";
   const [selected, setSelected] = useState<Set<number>>(new Set());
 
   // Reset the local selection whenever the question changes.
@@ -157,6 +162,18 @@ export default function QuestionCard({
               {result === "correct" ? "Correct!" : "Incorrect"}
             </ResultBadge>
           ) : null}
+
+          {/* Posts the enclosing form to /test/generate via formAction so we
+              avoid an invalid nested <form>; the answer fields are ignored. */}
+          <GenerateTestButton
+            type="submit"
+            formAction="/test/generate"
+            formMethod="post"
+            disabled={generatingTest}
+          >
+            <ListChecks size={14} />
+            <span>{generatingTest ? "Generating…" : "Generate a new test"}</span>
+          </GenerateTestButton>
 
           <Spacer />
 

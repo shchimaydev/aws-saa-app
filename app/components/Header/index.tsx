@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Form, useNavigation } from "react-router";
-import { History, House, ListChecks, Layers, Menu, X } from "lucide-react";
+import { House, ListChecks, Layers, Menu, X } from "lucide-react";
 
 import { signOutClient } from "~/lib/firebase/firebase.client";
 import {
@@ -12,7 +12,7 @@ import {
   ExamBadge,
   HomeLink,
   TestActions,
-  LatestTestLink,
+  OpenTestLink,
   GenerateButton,
   ScoreBar,
   Answered,
@@ -35,6 +35,9 @@ interface HeaderProps {
   wrong: number;
   total: number;
   user: HeaderUser;
+  /** When the user has at least one generated test, the action opens it
+   * instead of generating one (new tests are then made from the question card). */
+  hasTest: boolean;
   onMenuClick?: () => void;
 }
 
@@ -43,6 +46,7 @@ export default function Header({
   wrong,
   total,
   user,
+  hasTest,
   onMenuClick,
 }: HeaderProps) {
   const answered = correct + wrong;
@@ -98,19 +102,19 @@ export default function Header({
       </HomeLink>
 
       <TestActions>
-        <Form method="post" action="/test/generate">
-          <GenerateButton type="submit" disabled={generating}>
+        {hasTest ? (
+          <OpenTestLink to="/test" prefetch="intent" title="Open latest test">
             <ListChecks size={14} />
-            <span>{generating ? "Generating…" : "Generate Test"}</span>
-          </GenerateButton>
-        </Form>
-        <LatestTestLink
-          to="/test"
-          aria-label="Open latest test"
-          title="Open latest test"
-        >
-          <History size={15} />
-        </LatestTestLink>
+            <span>Open test</span>
+          </OpenTestLink>
+        ) : (
+          <Form method="post" action="/test/generate">
+            <GenerateButton type="submit" disabled={generating}>
+              <ListChecks size={14} />
+              <span>{generating ? "Generating…" : "Generate Test"}</span>
+            </GenerateButton>
+          </Form>
+        )}
       </TestActions>
 
       <ScoreBar>

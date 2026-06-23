@@ -4,6 +4,7 @@ import { Outlet, useLocation } from "react-router";
 import type { Route } from "./+types/index";
 import { requireSessionUser } from "~/lib/auth/session.server";
 import { getProgress } from "~/lib/progress/progress.server";
+import { getLatestTestId } from "~/lib/generated-test/test.server";
 import { TOTAL_QUESTIONS } from "~/lib/questions/questions.server";
 import { buildSidebarData } from "~/lib/quiz/sidebar.server";
 import Header from "~/components/Header";
@@ -12,7 +13,10 @@ import { Shell, LayoutGrid, Main, Backdrop } from "./index.styles";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const user = await requireSessionUser(request);
-  const progress = await getProgress(user.uid, request);
+  const [progress, latestTestId] = await Promise.all([
+    getProgress(user.uid, request),
+    getLatestTestId(user.uid),
+  ]);
 
   const url = new URL(request.url);
   const filter = url.searchParams.get("filter") ?? "all";
@@ -33,11 +37,12 @@ export async function loader({ request }: Route.LoaderArgs) {
     score: progress.score,
     total: TOTAL_QUESTIONS,
     sidebar,
+    hasTest: latestTestId !== null,
   };
 }
 
 export default function QuizLayout({ loaderData }: Route.ComponentProps) {
-  const { user, score, total, sidebar } = loaderData;
+  const { user, score, total, sidebar, hasTest } = loaderData;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
 
@@ -64,6 +69,7 @@ export default function QuizLayout({ loaderData }: Route.ComponentProps) {
         wrong={score.wrong}
         total={total}
         user={user}
+        hasTest={hasTest}
         onMenuClick={() => setDrawerOpen(true)}
       />
       <LayoutGrid>
