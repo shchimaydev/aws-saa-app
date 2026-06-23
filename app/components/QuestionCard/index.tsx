@@ -4,6 +4,7 @@ import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 
 import OptionButton from "~/components/OptionButton";
 import type { OptionVariant } from "~/components/OptionButton/index.styles";
+import type { MaybeResult } from "~/types/result";
 import {
   nextHref as quizNextHref,
   prevHref as quizPrevHref,
@@ -35,7 +36,7 @@ interface QuestionCardProps {
   multi: boolean;
   options: QuestionOption[];
   revealed: boolean;
-  result: "correct" | "wrong" | null;
+  result: MaybeResult;
   /** Correct indices — present only when revealed. */
   correct: number[] | null;
   /** Per-option explanations — present only when revealed. */

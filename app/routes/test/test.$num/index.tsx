@@ -6,6 +6,7 @@ import { getQuestion } from "~/lib/questions/questions.server";
 import { getTest, recordTestAnswer } from "~/lib/generated-test/test.server";
 import { testNextHref, testPrevHref } from "~/lib/generated-test/test-nav";
 import QuestionCard from "~/components/QuestionCard";
+import type { MaybeResult } from "~/types/result";
 
 // Options are stored as "A. ...". Strip the leading "A. " for display.
 function parseOption(opt: string, i: number) {
@@ -106,10 +107,7 @@ export default function TestQuestion({
 
   // Revealed once answered (from the test) or immediately after submitting.
   const revealed = loaderData.answered || Boolean(actionData);
-  const result = (actionData?.result ?? loaderData.result) as
-    | "correct"
-    | "wrong"
-    | null;
+  const result = (actionData?.result ?? loaderData.result) as MaybeResult;
   const correct = actionData?.correct ?? loaderData.correct;
   const optionExplanations =
     actionData?.optionExplanations ?? loaderData.optionExplanations;

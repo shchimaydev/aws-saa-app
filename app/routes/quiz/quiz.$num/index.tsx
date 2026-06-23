@@ -5,6 +5,7 @@ import { requireUserId } from "~/lib/auth/session.server";
 import { getQuestion, TOTAL_QUESTIONS } from "~/lib/questions/questions.server";
 import { getProgress, recordAnswer } from "~/lib/progress/progress.server";
 import QuestionCard from "~/components/QuestionCard";
+import type { MaybeResult } from "~/types/result";
 
 // Options are stored as "A. ...". Strip the leading "A. " for display.
 function parseOption(opt: string, i: number) {
@@ -86,10 +87,7 @@ export default function QuizQuestion({
 
   // Revealed once answered (from progress) or immediately after submitting.
   const revealed = loaderData.answered || Boolean(actionData);
-  const result = (actionData?.result ?? loaderData.result) as
-    | "correct"
-    | "wrong"
-    | null;
+  const result = (actionData?.result ?? loaderData.result) as MaybeResult;
   const correct = actionData?.correct ?? loaderData.correct;
   const optionExplanations =
     actionData?.optionExplanations ?? loaderData.optionExplanations;

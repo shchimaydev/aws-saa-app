@@ -73,9 +73,9 @@ Tests are co-located (`*.test.ts`) and pure where possible — heavy logic (e.g.
 - Route modules export `loader` / `action` / a default component, typed with the generated `Route` namespace:
   ```ts
   import type { Route } from "./+types/index";
-  export async function loader({ request, params }: Route.LoaderArgs) { ... }
-  export async function action({ request, params }: Route.ActionArgs) { ... }
-  export default function X({ loaderData, actionData }: Route.ComponentProps) { ... }
+  export async function loader({ request, params }: Route.LoaderArgs) {  }
+  export async function action({ request, params }: Route.ActionArgs) {  }
+  export default function X({ loaderData, actionData }: Route.ComponentProps) { }
   ```
 - **Resource routes** (no UI, e.g. `quiz/api/sidebar`) are loaders that return data for client fetches — kept outside the layout so they carry no chrome.
 - Throw `Response`/`redirect` for control flow (404s, auth redirects) rather than returning error shapes.

@@ -9,7 +9,8 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "../firebase/firebase.server";
 
-export type Result = "correct" | "wrong";
+export type { Result } from "~/types/result";
+import type { Result } from "~/types/result";
 
 export interface Progress {
   results: Record<string, Result>;
