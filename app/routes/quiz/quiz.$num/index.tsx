@@ -1,9 +1,13 @@
-import { useNavigation } from "react-router";
+import { useNavigate, useNavigation, useSearchParams } from "react-router";
 
 import type { Route } from "./+types/index";
 import { requireUserId } from "~/lib/auth/session.server";
 import { getQuestion, TOTAL_QUESTIONS } from "~/lib/questions/questions.server";
 import { getProgress, recordAnswer } from "~/lib/progress/progress.server";
+import {
+  nextHref as quizNextHref,
+  prevHref as quizPrevHref,
+} from "~/lib/quiz/quiz-nav";
 import QuestionCard from "~/components/QuestionCard";
 import type { MaybeResult } from "~/types/result";
 
@@ -84,6 +88,9 @@ export default function QuizQuestion({
 }: Route.ComponentProps) {
   const navigation = useNavigation();
   const submitting = navigation.state !== "idle";
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const qs = searchParams.toString();
 
   // Revealed once answered (from progress) or immediately after submitting.
   const revealed = loaderData.answered || Boolean(actionData);
@@ -92,6 +99,9 @@ export default function QuizQuestion({
   const optionExplanations =
     actionData?.optionExplanations ?? loaderData.optionExplanations;
   const selectedAfter = actionData?.selected ?? [];
+
+  const prev = quizPrevHref(loaderData.num, qs);
+  const next = quizNextHref(loaderData.num, loaderData.total, qs);
 
   return (
     <QuestionCard
@@ -107,6 +117,8 @@ export default function QuizQuestion({
       optionExplanations={optionExplanations}
       selectedAfter={selectedAfter}
       submitting={submitting}
+      onPrev={prev ? () => navigate(prev) : null}
+      onNext={() => navigate(next)}
     />
   );
 }

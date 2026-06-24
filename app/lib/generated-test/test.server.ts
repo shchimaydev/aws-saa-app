@@ -89,6 +89,24 @@ export async function createTest(
   return { testId: ref.id, questions };
 }
 
+/**
+ * Clear all graded answers for a test, resetting its score to zero. Leaves the
+ * question set intact so the user retakes the same exam. The mirrored answers in
+ * global `/progress/{uid}` are intentionally left as-is — progress tracks
+ * whether a question has ever been answered, independent of this test.
+ */
+export async function resetTest(uid: string, testId: string): Promise<void> {
+  const ref = testsCol(uid).doc(testId);
+  await ref.set(
+    {
+      results: {},
+      score: { correct: 0, wrong: 0 },
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+}
+
 /** Most-recently-created test id for this user, or null if they have none. */
 export async function getLatestTestId(uid: string): Promise<string | null> {
   const snap = await testsCol(uid).orderBy("createdAt", "desc").limit(1).get();

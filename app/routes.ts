@@ -14,6 +14,7 @@ export default [
 
   // Generated mock-exam ("Generate Test") flow, mirroring the quiz block.
   route("test/generate", "routes/test/generate/index.tsx"), // action-only
+  route("test/:testId/reset", "routes/test/reset/index.tsx"), // action-only
   route("test", "routes/test/index/index.tsx"), // redirect → latest test
   route("test/:testId", "routes/test/layout/index.tsx", [
     route(":num", "routes/test/test.$num/index.tsx"),

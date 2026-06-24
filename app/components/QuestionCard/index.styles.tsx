@@ -1,4 +1,4 @@
-import { Form, Link } from "react-router";
+import { Form } from "react-router";
 import styled, { css } from "styled-components";
 
 export const Header = styled.div`
@@ -86,7 +86,7 @@ const navBase = css`
   text-decoration: none;
 `;
 
-export const PrevLink = styled(Link)`
+export const PrevButton = styled.button`
   ${navBase}
   cursor: pointer;
   transition: border-color 0.15s;
@@ -125,6 +125,10 @@ export const GenerateTestButton = styled.button`
   }
 `;
 
+// Sibling to GenerateTestButton: clear the open test's results and restart it.
+// Shares the quiet nav look so it stays secondary alongside Generate.
+export const ResetTestButton = styled(GenerateTestButton)``;
+
 // Primary control — Submit (unanswered) and Next (answered) share this look.
 const primaryBase = css`
   display: inline-flex;
@@ -155,7 +159,7 @@ export const SubmitButton = styled.button`
   }
 `;
 
-export const NextLink = styled(Link)`
+export const NextButton = styled.button`
   ${primaryBase}
 `;
 

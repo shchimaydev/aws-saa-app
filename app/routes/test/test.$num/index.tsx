@@ -1,4 +1,4 @@
-import { useNavigation, useSearchParams } from "react-router";
+import { useNavigate, useNavigation, useSearchParams, useSubmit } from "react-router";
 
 import type { Route } from "./+types/index";
 import { requireUserId } from "~/lib/auth/session.server";
@@ -104,6 +104,8 @@ export default function TestQuestion({
   const submitting = navigation.state !== "idle";
   const [searchParams] = useSearchParams();
   const qs = searchParams.toString();
+  const navigate = useNavigate();
+  const submit = useSubmit();
 
   // Revealed once answered (from the test) or immediately after submitting.
   const revealed = loaderData.answered || Boolean(actionData);
@@ -114,6 +116,8 @@ export default function TestQuestion({
   const selectedAfter = actionData?.selected ?? [];
 
   const { testId, num, questions, position, length } = loaderData;
+  const prevHref = testPrevHref(testId, num, questions, qs);
+  const nextHref = testNextHref(testId, num, questions, qs);
 
   return (
     <QuestionCard
@@ -129,8 +133,11 @@ export default function TestQuestion({
       optionExplanations={optionExplanations}
       selectedAfter={selectedAfter}
       submitting={submitting}
-      prevHref={testPrevHref(testId, num, questions, qs)}
-      nextHref={testNextHref(testId, num, questions, qs)}
+      onPrev={prevHref ? () => navigate(prevHref) : null}
+      onNext={() => navigate(nextHref)}
+      onResetTest={() =>
+        submit(null, { method: "post", action: `/test/${testId}/reset` })
+      }
     />
   );
 }

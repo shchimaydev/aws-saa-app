@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
-import { Form, useNavigation, useSearchParams } from "react-router";
-import { Check, ChevronLeft, ChevronRight, ListChecks, X } from "lucide-react";
+import { Form, useNavigation } from "react-router";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ListChecks,
+  RotateCcw,
+  X,
+} from "lucide-react";
 
 import OptionButton from "~/components/OptionButton";
 import type { OptionVariant } from "~/components/OptionButton/index.styles";
 import type { MaybeResult } from "~/types/result";
-import {
-  nextHref as quizNextHref,
-  prevHref as quizPrevHref,
-} from "~/lib/quiz/quiz-nav";
 import {
   Header,
   Badge,
@@ -17,11 +20,12 @@ import {
   OptionsGrid,
   ActionRow,
   Spacer,
-  PrevLink,
+  PrevButton,
   PrevDisabled,
   GenerateTestButton,
+  ResetTestButton,
   SubmitButton,
-  NextLink,
+  NextButton,
   ResultBadge,
 } from "./index.styles";
 
@@ -46,12 +50,17 @@ interface QuestionCardProps {
   selectedAfter: number[];
   submitting: boolean;
   /**
-   * Override the prev/next targets. Defaults to the linear quiz nav (by `num`);
-   * the test route passes test-scoped hrefs that walk its own question order.
-   * `prevHref === null` disables the Prev control.
+   * Navigate to the previous question. `null` disables the Prev control (e.g.
+   * on the first question). The parent owns the destination.
    */
-  prevHref?: string | null;
-  nextHref?: string;
+  onPrev: (() => void) | null;
+  /** Navigate to the next question / finish. */
+  onNext: () => void;
+  /**
+   * When provided (test route only), render a "Reset current test" button that
+   * clears the test's results and restarts it.
+   */
+  onResetTest?: () => void;
 }
 
 export default function QuestionCard({
@@ -66,14 +75,17 @@ export default function QuestionCard({
   optionExplanations,
   selectedAfter,
   submitting,
-  prevHref,
-  nextHref,
+  onPrev,
+  onNext,
+  onResetTest,
 }: QuestionCardProps) {
-  const [searchParams] = useSearchParams();
   const navigation = useNavigation();
   // Scope the pending label to the generate action so an answer submit (or any
   // other navigation) doesn't flip this button to "Generating…".
   const generatingTest = navigation.formAction === "/test/generate";
+  // The reset action lives at /test/:testId/reset; match by suffix since the
+  // dynamic testId is owned by the parent, not this component.
+  const resettingTest = navigation.formAction?.endsWith("/reset") ?? false;
   const [selected, setSelected] = useState<Set<number>>(new Set());
 
   // Reset the local selection whenever the question changes.
@@ -105,11 +117,6 @@ export default function QuestionCard({
     }
     return selected.has(i) ? "selected" : "default";
   }
-
-  const qs = searchParams.toString();
-  // Use the test-scoped overrides when provided, else the linear quiz nav.
-  const prev = prevHref !== undefined ? prevHref : quizPrevHref(num, qs);
-  const next = nextHref !== undefined ? nextHref : quizNextHref(num, total, qs);
 
   return (
     <div>
@@ -144,11 +151,11 @@ export default function QuestionCard({
           ))}
 
         <ActionRow>
-          {prev ? (
-            <PrevLink to={prev}>
+          {onPrev ? (
+            <PrevButton type="button" onClick={onPrev}>
               <ChevronLeft size={14} />
               Prev
-            </PrevLink>
+            </PrevButton>
           ) : (
             <PrevDisabled aria-disabled="true">
               <ChevronLeft size={14} />
@@ -175,13 +182,24 @@ export default function QuestionCard({
             <span>{generatingTest ? "Generating…" : "Generate a new test"}</span>
           </GenerateTestButton>
 
+          {onResetTest ? (
+            <ResetTestButton
+              type="button"
+              onClick={onResetTest}
+              disabled={resettingTest}
+            >
+              <RotateCcw size={14} />
+              <span>{resettingTest ? "Resetting…" : "Reset current test"}</span>
+            </ResetTestButton>
+          ) : null}
+
           <Spacer />
 
           {revealed ? (
-            <NextLink to={next}>
+            <NextButton type="button" onClick={onNext}>
               {num < total ? "Next" : "Finish"}
               <ChevronRight size={14} />
-            </NextLink>
+            </NextButton>
           ) : (
             <SubmitButton
               type="submit"
