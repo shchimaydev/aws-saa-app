@@ -129,6 +129,9 @@ export const GenerateTestButton = styled.button`
 // Shares the quiet nav look so it stays secondary alongside Generate.
 export const ResetTestButton = styled(GenerateTestButton)``;
 
+// Sibling control: clear only the test's wrong answers to re-attempt them.
+export const RetryFailedButton = styled(GenerateTestButton)``;
+
 // Primary control — Submit (unanswered) and Next (answered) share this look.
 const primaryBase = css`
   display: inline-flex;

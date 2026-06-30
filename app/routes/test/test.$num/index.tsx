@@ -43,6 +43,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     options: question.options.map(parseOption),
     answered,
     result: storedResult,
+    // Drives the "Try failed questions again" button (test route only).
+    hasWrong: test.score.wrong > 0,
   };
 
   // Withhold the correct answers + explanations until the question is answered.
@@ -137,6 +139,15 @@ export default function TestQuestion({
       onNext={() => navigate(nextHref)}
       onResetTest={() =>
         submit(null, { method: "post", action: `/test/${testId}/reset` })
+      }
+      onRetryFailed={
+        loaderData.hasWrong
+          ? () =>
+              submit(null, {
+                method: "post",
+                action: `/test/${testId}/retry-wrong`,
+              })
+          : undefined
       }
     />
   );

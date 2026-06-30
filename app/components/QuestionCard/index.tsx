@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ListChecks,
+  RefreshCw,
   RotateCcw,
   X,
 } from "lucide-react";
@@ -24,6 +25,7 @@ import {
   PrevDisabled,
   GenerateTestButton,
   ResetTestButton,
+  RetryFailedButton,
   SubmitButton,
   NextButton,
   ResultBadge,
@@ -61,6 +63,12 @@ interface QuestionCardProps {
    * clears the test's results and restarts it.
    */
   onResetTest?: () => void;
+  /**
+   * When provided (test route only; pass when the test has wrong answers),
+   * render a "Try failed questions again" button that clears only the wrong
+   * answers so they can be re-attempted.
+   */
+  onRetryFailed?: () => void;
 }
 
 export default function QuestionCard({
@@ -78,6 +86,7 @@ export default function QuestionCard({
   onPrev,
   onNext,
   onResetTest,
+  onRetryFailed,
 }: QuestionCardProps) {
   const navigation = useNavigation();
   // Scope the pending label to the generate action so an answer submit (or any
@@ -86,6 +95,9 @@ export default function QuestionCard({
   // The reset action lives at /test/:testId/reset; match by suffix since the
   // dynamic testId is owned by the parent, not this component.
   const resettingTest = navigation.formAction?.endsWith("/reset") ?? false;
+  // Sibling reset that clears only wrong answers; matched by its own suffix.
+  const retryingFailed =
+    navigation.formAction?.endsWith("/retry-wrong") ?? false;
   const [selected, setSelected] = useState<Set<number>>(new Set());
 
   // Reset the local selection whenever the question changes.
@@ -191,6 +203,19 @@ export default function QuestionCard({
               <RotateCcw size={14} />
               <span>{resettingTest ? "Resetting…" : "Reset current test"}</span>
             </ResetTestButton>
+          ) : null}
+
+          {onRetryFailed ? (
+            <RetryFailedButton
+              type="button"
+              onClick={onRetryFailed}
+              disabled={retryingFailed}
+            >
+              <RefreshCw size={14} />
+              <span>
+                {retryingFailed ? "Resetting…" : "Try failed questions again"}
+              </span>
+            </RetryFailedButton>
           ) : null}
 
           <Spacer />

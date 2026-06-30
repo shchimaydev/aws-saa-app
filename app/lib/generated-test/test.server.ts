@@ -107,6 +107,37 @@ export async function resetTest(uid: string, testId: string): Promise<void> {
   );
 }
 
+/**
+ * Clear only the *wrong* answers for a test, leaving correct answers and the
+ * question set intact, and zero out the wrong tally. Lets the user re-attempt
+ * the questions they missed. Like `resetTest`, the mirrored answers in global
+ * `/progress/{uid}` are intentionally left as-is — progress tracks whether a
+ * question has ever been answered, independent of this test.
+ */
+export async function resetTestWrongAnswers(
+  uid: string,
+  testId: string,
+): Promise<void> {
+  const ref = testsCol(uid).doc(testId);
+  await adminDb.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new Response("Not Found", { status: 404 });
+    const results: Record<string, Result> = snap.data()?.results ?? {};
+
+    // Delete each wrong entry by its nested field path — a merged `set` of the
+    // rebuilt map would keep stale keys rather than remove them.
+    const updates: Record<string, unknown> = {
+      "score.wrong": 0,
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+    for (const [key, value] of Object.entries(results)) {
+      if (value === "wrong") updates[`results.${key}`] = FieldValue.delete();
+    }
+
+    tx.set(ref, updates, { merge: true });
+  });
+}
+
 /** Most-recently-created test id for this user, or null if they have none. */
 export async function getLatestTestId(uid: string): Promise<string | null> {
   const snap = await testsCol(uid).orderBy("createdAt", "desc").limit(1).get();
