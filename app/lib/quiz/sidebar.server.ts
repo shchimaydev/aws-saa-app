@@ -40,6 +40,39 @@ export interface BuildSidebarOptions {
   q?: string;
 }
 
+/**
+ * Whether a question matches the active status filter and search query. Shared
+ * by the quiz/test sidebar builders and the filtered Next/Prev nav so the list
+ * and the navigation order can never drift. `query` is already trimmed +
+ * lowercased; `result` is the question's graded result (or null).
+ */
+export function matchesSidebarFilter(
+  s: { textLower: string },
+  result: Result | null,
+  filter: string,
+  query: string,
+): boolean {
+  if (filter === "unanswered" && result) return false;
+  if (filter === "correct" && result !== "correct") return false;
+  if (filter === "wrong" && result !== "wrong") return false;
+  if (query && !s.textLower.includes(query)) return false;
+  return true;
+}
+
+/** Matching quiz `num`s in ascending order, for filtered Next/Prev. */
+export function filteredQuizNums({
+  results,
+  filter = "all",
+  q = "",
+}: Pick<BuildSidebarOptions, "results" | "filter" | "q">): number[] {
+  const query = q.trim().toLowerCase();
+  const resultOf = (num: number): Result | null =>
+    results[String(num - 1)] ?? null;
+  return getAllSidebarSource()
+    .filter((s) => matchesSidebarFilter(s, resultOf(s.num), filter, query))
+    .map((s) => s.num);
+}
+
 export function buildSidebarData({
   results,
   anchor,
@@ -54,14 +87,7 @@ export function buildSidebarData({
 
   if (filtering) {
     const items = getAllSidebarSource()
-      .filter((s) => {
-        const result = resultOf(s.num);
-        if (filter === "unanswered" && result) return false;
-        if (filter === "correct" && result !== "correct") return false;
-        if (filter === "wrong" && result !== "wrong") return false;
-        if (query && !s.textLower.includes(query)) return false;
-        return true;
-      })
+      .filter((s) => matchesSidebarFilter(s, resultOf(s.num), filter, query))
       .map((s) => ({
         num: s.num,
         preview: s.preview,

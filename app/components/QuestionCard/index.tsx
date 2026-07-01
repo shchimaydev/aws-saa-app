@@ -59,6 +59,13 @@ interface QuestionCardProps {
   /** Navigate to the next question / finish. */
   onNext: () => void;
   /**
+   * Whether this is the last question in the current sequence (so the Next
+   * control reads "Finish"). Defaults to `num >= total` when omitted; pass it
+   * explicitly when navigating a filtered subset, where the last question isn't
+   * necessarily the highest-numbered one.
+   */
+  isLast?: boolean;
+  /**
    * When provided (test route only), render a "Reset current test" button that
    * clears the test's results and restarts it.
    */
@@ -85,9 +92,11 @@ export default function QuestionCard({
   submitting,
   onPrev,
   onNext,
+  isLast,
   onResetTest,
   onRetryFailed,
 }: QuestionCardProps) {
+  const lastQuestion = isLast ?? num >= total;
   const navigation = useNavigation();
   // Scope the pending label to the generate action so an answer submit (or any
   // other navigation) doesn't flip this button to "Generating…".
@@ -222,7 +231,7 @@ export default function QuestionCard({
 
           {revealed ? (
             <NextButton type="button" onClick={onNext}>
-              {num < total ? "Next" : "Finish"}
+              {lastQuestion ? "Finish" : "Next"}
               <ChevronRight size={14} />
             </NextButton>
           ) : (

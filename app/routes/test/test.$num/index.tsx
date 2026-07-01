@@ -4,7 +4,13 @@ import type { Route } from "./+types/index";
 import { requireUserId } from "~/lib/auth/session.server";
 import { getQuestion } from "~/lib/questions/questions.server";
 import { getTest, recordTestAnswer } from "~/lib/generated-test/test.server";
-import { testNextHref, testPrevHref } from "~/lib/generated-test/test-nav";
+import {
+  testNextHref,
+  testPrevHref,
+  testNextInListHref,
+  testPrevInListHref,
+} from "~/lib/generated-test/test-nav";
+import { filteredTestNums } from "~/lib/generated-test/test-sidebar.server";
 import QuestionCard from "~/components/QuestionCard";
 import type { MaybeResult } from "~/types/result";
 
@@ -31,6 +37,22 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const storedResult = test.results[String(num)] ?? null;
   const answered = storedResult !== null;
 
+  // When a sidebar filter/search is active, Next/Prev step through only the
+  // matching questions (in the test's own order); null means no filter, so the
+  // component falls back to walking the full test.
+  const url = new URL(request.url);
+  const filter = url.searchParams.get("filter") ?? "all";
+  const q = url.searchParams.get("q") ?? "";
+  const filtering = q.trim() !== "" || filter !== "all";
+  const filteredNums = filtering
+    ? filteredTestNums({
+        questions: test.questions,
+        results: test.results,
+        filter,
+        q,
+      })
+    : null;
+
   const base = {
     num,
     testId,
@@ -43,6 +65,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     options: question.options.map(parseOption),
     answered,
     result: storedResult,
+    filteredNums,
     // Drives the "Try failed questions again" button (test route only).
     hasWrong: test.score.wrong > 0,
   };
@@ -117,15 +140,25 @@ export default function TestQuestion({
     actionData?.optionExplanations ?? loaderData.optionExplanations;
   const selectedAfter = actionData?.selected ?? [];
 
-  const { testId, num, questions, position, length } = loaderData;
-  const prevHref = testPrevHref(testId, num, questions, qs);
-  const nextHref = testNextHref(testId, num, questions, qs);
+  const { testId, num, questions, position, length, filteredNums } = loaderData;
+  const allowed = filteredNums ? new Set(filteredNums) : null;
+  const prevHref = allowed
+    ? testPrevInListHref(testId, num, questions, allowed, qs)
+    : testPrevHref(testId, num, questions, qs);
+  const nextHref = allowed
+    ? testNextInListHref(testId, num, questions, allowed, qs)
+    : testNextHref(testId, num, questions, qs);
+  const curIdx = questions.indexOf(num);
+  const isLast = allowed
+    ? !questions.some((n, i) => i > curIdx && allowed.has(n))
+    : position >= length;
 
   return (
     <QuestionCard
       key={num}
       num={position}
       total={length}
+      isLast={isLast}
       text={loaderData.text}
       multi={loaderData.multi}
       options={loaderData.options}

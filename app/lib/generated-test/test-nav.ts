@@ -38,3 +38,46 @@ export function testNextHref(
   }
   return withQs(`/test/${testId}/complete`, qs);
 }
+
+/**
+ * "Next" within a filtered test: walk the test's order from the current position
+ * and return the first question that's in `allowed`, or the completion screen.
+ * `num` is always present in `questions` (it's a test question), so the walk is
+ * anchored by index — robust even when `num` itself left `allowed` (e.g. it was
+ * just answered under the "unanswered" filter).
+ */
+export function testNextInListHref(
+  testId: string,
+  num: number,
+  questions: number[],
+  allowed: Set<number>,
+  qs = "",
+): string {
+  const idx = questions.indexOf(num);
+  for (let i = idx + 1; i < questions.length; i++) {
+    if (allowed.has(questions[i])) {
+      return withQs(`/test/${testId}/${questions[i]}`, qs);
+    }
+  }
+  return withQs(`/test/${testId}/complete`, qs);
+}
+
+/**
+ * "Prev" within a filtered test: the previous question in the test's order that's
+ * in `allowed`, or `null` at the start (where Prev is disabled).
+ */
+export function testPrevInListHref(
+  testId: string,
+  num: number,
+  questions: number[],
+  allowed: Set<number>,
+  qs = "",
+): string | null {
+  const idx = questions.indexOf(num);
+  for (let i = idx - 1; i >= 0; i--) {
+    if (allowed.has(questions[i])) {
+      return withQs(`/test/${testId}/${questions[i]}`, qs);
+    }
+  }
+  return null;
+}

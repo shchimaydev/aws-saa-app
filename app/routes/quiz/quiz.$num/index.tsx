@@ -7,7 +7,10 @@ import { getProgress, recordAnswer } from "~/lib/progress/progress.server";
 import {
   nextHref as quizNextHref,
   prevHref as quizPrevHref,
+  nextInListHref,
+  prevInListHref,
 } from "~/lib/quiz/quiz-nav";
+import { filteredQuizNums } from "~/lib/quiz/sidebar.server";
 import QuestionCard from "~/components/QuestionCard";
 import type { MaybeResult } from "~/types/result";
 
@@ -28,6 +31,18 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const storedResult = progress.results[String(num - 1)] ?? null;
   const answered = storedResult !== null;
 
+  // When a sidebar filter/search is active, Next/Prev step through only the
+  // matching questions. We compute the matching set here (it reflects post-answer
+  // progress, since loaders revalidate after the answer action); null means no
+  // filter, so the component falls back to plain sequential navigation.
+  const url = new URL(request.url);
+  const filter = url.searchParams.get("filter") ?? "all";
+  const q = url.searchParams.get("q") ?? "";
+  const filtering = q.trim() !== "" || filter !== "all";
+  const filteredNums = filtering
+    ? filteredQuizNums({ results: progress.results, filter, q })
+    : null;
+
   const base = {
     num,
     total: TOTAL_QUESTIONS,
@@ -36,6 +51,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     options: question.options.map(parseOption),
     answered,
     result: storedResult,
+    filteredNums,
   };
 
   // Withhold the correct answers + explanations until the question is answered.
@@ -100,8 +116,16 @@ export default function QuizQuestion({
     actionData?.optionExplanations ?? loaderData.optionExplanations;
   const selectedAfter = actionData?.selected ?? [];
 
-  const prev = quizPrevHref(loaderData.num, qs);
-  const next = quizNextHref(loaderData.num, loaderData.total, qs);
+  const { filteredNums } = loaderData;
+  const prev = filteredNums
+    ? prevInListHref(loaderData.num, filteredNums, qs)
+    : quizPrevHref(loaderData.num, qs);
+  const next = filteredNums
+    ? nextInListHref(loaderData.num, filteredNums, qs)
+    : quizNextHref(loaderData.num, loaderData.total, qs);
+  const isLast = filteredNums
+    ? !filteredNums.some((n) => n > loaderData.num)
+    : loaderData.num >= loaderData.total;
 
   return (
     <QuestionCard
@@ -119,6 +143,7 @@ export default function QuizQuestion({
       submitting={submitting}
       onPrev={prev ? () => navigate(prev) : null}
       onNext={() => navigate(next)}
+      isLast={isLast}
     />
   );
 }

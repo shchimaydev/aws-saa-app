@@ -124,8 +124,11 @@ export async function resetTestWrongAnswers(
     if (!snap.exists) throw new Response("Not Found", { status: 404 });
     const results: Record<string, Result> = snap.data()?.results ?? {};
 
-    // Delete each wrong entry by its nested field path — a merged `set` of the
-    // rebuilt map would keep stale keys rather than remove them.
+    // Delete each wrong entry by its nested field path. We use `update` (not a
+    // merged `set`): with `set({ merge: true })` a key like "results.5" is a
+    // *literal* field name, not a path, so the nested entry is never removed.
+    // `update` treats the dotted keys as paths; question-num keys are numeric,
+    // so there's no ambiguity from the split.
     const updates: Record<string, unknown> = {
       "score.wrong": 0,
       updatedAt: FieldValue.serverTimestamp(),
@@ -134,7 +137,7 @@ export async function resetTestWrongAnswers(
       if (value === "wrong") updates[`results.${key}`] = FieldValue.delete();
     }
 
-    tx.set(ref, updates, { merge: true });
+    tx.update(ref, updates);
   });
 }
 
